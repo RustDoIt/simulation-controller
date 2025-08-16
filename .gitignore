@@ -1,0 +1,15 @@
+/target/
+/debug/
+/release/
+
+.vscode/
+*.code-workspace
+
+.DS_Store
+Thumbs.db
+
+*.log
+*.tmp
+
+/slint-auto/
+/slint-out/

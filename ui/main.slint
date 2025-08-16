@@ -1,0 +1,141 @@
+import "../assets/fonts/Satoshi-Regular.ttf";
+import { Palette } from "palette.slint";
+import { ListItem } from "list_item.slint";
+
+export struct Drone {
+    title: string,
+}
+
+export struct Client {
+    title: string,
+    subtitle: string,
+}
+
+export struct Server {
+    title: string,
+}
+
+export component MainWindow inherits Window {
+    in property <[Drone]> drones;
+    in property <[Client]> clients;
+    in property <[Server]> servers;
+
+    width: 960px;
+    height: 540px;
+    default-font-family: "Satoshi";
+    background: Palette.bg_alt;
+
+    VerticalLayout {
+
+        Rectangle {
+            height: 64px;
+            width: parent.width;
+            background: Palette.bg;
+
+            HorizontalLayout {
+                padding-left: 16px;
+                padding-right: 16px;
+                alignment: start;
+
+                VerticalLayout {
+                    alignment: center;
+
+                    Image {
+                        source: @image-url("../assets/images/logo.png");
+                        width: 196px;
+                        height: 32px;
+                    }
+
+                    // Image {
+                    //     source: @image-url("../assets/images/logo-extended.png");
+                    //     width: 228px;
+                    //     height: 32px;
+                    // }
+
+                    // Image {
+                    //     source: @image-url("../assets/images/icon.png");
+                    //     width: 47px;
+                    //     height: 32px;
+                    // }
+                }
+            }
+        }
+
+        Rectangle { height: 1px; background: Palette.bg_alt; }
+
+        HorizontalLayout {
+            spacing: 1px;
+            
+            //? Nodes column
+            Rectangle {
+                horizontal-stretch: 1;
+                vertical-stretch: 1;
+                background: Palette.bg;
+                clip: true;
+
+                Flickable {
+                    width: parent.width;
+                    height: parent.height;
+
+                    VerticalLayout {
+                        width: parent.width;
+                        padding: 16px;
+                        spacing: 8px;
+
+                        Text {
+                            text: "DRONES";
+                            color: Palette.grey;
+                            font-size: 16px;
+                            font-weight: 800;
+                        }
+
+                        for drone[i] in drones : ListItem {
+                            stripe_color: Palette.orange;
+                            title: drone.title;
+                            subtitle: "";
+                            row_height: 48px;
+                        }
+                        
+                        Rectangle { height: 16px; }
+
+                        Text {
+                            text: "CLIENTS";
+                            color: Palette.grey;
+                            font-size: 16px;
+                            font-weight: 800;
+                        }
+
+                        for client[i] in clients : ListItem {
+                            stripe_color: Palette.green;
+                            title: client.title;
+                            subtitle: client.subtitle;
+                            row_height: 64px;
+                        }
+                        
+                        Rectangle { height: 16px; }
+
+                        Text {
+                            text: "SERVERS";
+                            color: Palette.grey;
+                            font-size: 16px;
+                            font-weight: 800;
+                        }
+
+                        for server[i] in servers : ListItem {
+                            stripe_color: Palette.purple;
+                            title: server.title;
+                            subtitle: "";
+                            row_height: 48px;
+                        }
+                    }
+                }
+            }
+            
+            //? Graph column
+            Rectangle { horizontal-stretch: 2; vertical-stretch: 1; background: Palette.bg; }
+
+            //? Commands column
+            Rectangle { horizontal-stretch: 1; vertical-stretch: 1; background: Palette.bg; }
+        }
+    }
+}
