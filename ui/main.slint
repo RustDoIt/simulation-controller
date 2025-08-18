@@ -1,6 +1,12 @@
 import "../assets/fonts/Satoshi-Regular.ttf";
+
 import { Palette } from "palette.slint";
+
 import { ListItem } from "list_item.slint";
+import { Button } from "button.slint";
+import { DroneMenu } from "drone_menu.slint";
+
+//import { ContextMenu } from "context_menu.slint";
 
 export struct Drone {
     title: string,
@@ -20,8 +26,8 @@ export component MainWindow inherits Window {
     in property <[Client]> clients;
     in property <[Server]> servers;
 
-    width: 960px;
-    height: 540px;
+    width: 1280px;
+    height: 720px;
     default-font-family: "Satoshi";
     background: Palette.bg_alt;
 
@@ -82,6 +88,9 @@ export component MainWindow inherits Window {
                             title: drone.title;
                             subtitle: "";
                             row_height: 48px;
+                            mouseClick => {
+                                droneMenu.visible = true;
+                            }
                         }
                         
                         Rectangle { height: 16px; }
@@ -123,7 +132,57 @@ export component MainWindow inherits Window {
             Rectangle { horizontal-stretch: 2; vertical-stretch: 1; background: Palette.bg; }
 
             //? Commands column
-            Rectangle { horizontal-stretch: 1; vertical-stretch: 1; background: Palette.bg; }
+            Rectangle {
+                horizontal-stretch: 1;
+                vertical-stretch: 1;
+                background: Palette.bg;
+                clip: true;
+
+                Flickable {
+                    width: parent.width;
+                    height: parent.height;
+
+                    VerticalLayout {
+                        width: parent.width;
+                        padding: 16px;
+                        spacing: 8px;
+
+                        alignment: start;
+
+                        Button {
+                            text: "Add Sender";
+                            clicked => {
+                                debug("'Add Sender' button clicked");
+                            }
+                        }
+
+                        Button {
+                            text: "Remove Sender";
+                            clicked => {
+                                debug("'Remove Sender' button clicked");
+                            }
+                        }
+
+                        Button {
+                            text: "Change PDR";
+                            clicked => {
+                                debug("'Change PDR' button clicked");
+                            }
+                        }
+
+                        Button {
+                            text: "Crash Drone";
+                            clicked => {
+                                debug("'Crash Drone' button clicked");
+                            }
+                        }
+                    }
+                }
+            }
         }
+    }
+
+    droneMenu := DroneMenu {
+        visible: false;
     }
 }
