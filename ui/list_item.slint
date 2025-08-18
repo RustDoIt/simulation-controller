@@ -40,7 +40,12 @@ export component ListItem inherits Rectangle {
                 alignment: subtitle == "" ? start : center;
 
                 Text { text: title; color: white; font-size: 16px; }
-                if subtitle != "" : Text { text: subtitle; color: Palette.grey; font-size: 12px; }
+                if subtitle != "" : Text { 
+                    text: subtitle; 
+                    color: Palette.grey; 
+                    font-weight: 600;
+                    font-size: 12px; 
+                }
             }
         }
     }
