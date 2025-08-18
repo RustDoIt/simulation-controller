@@ -1,30 +1,46 @@
 import { Palette } from "palette.slint";
 
 export component DroneMenu {
-    width: 480px;
-    height: 200px;
+
+    width: 1280px;
+    height: 720px;
 
     Rectangle {
+        background: black;
+        opacity: 0.75;
+    }
+
+    Rectangle {
+
+        width: 480px;
+        height: 200px;
+
         background: Palette.bg;
 
         VerticalLayout {
             HorizontalLayout {
                 padding: 16px;
-                alignment: end;
+
+
+                Text {
+                    text: "Manage Drone";
+                    font-size: 18px;
+                    font-weight: 600;
+                    vertical-alignment: center;
+                    horizontal-alignment: left;
+                    horizontal-stretch: 1; 
+                }
 
                 Rectangle {
+                    height: 32px;
+                    width: 32px;
+                    background: area1.has-hover ? #e05244 : Palette.red;
+
                     area1 := TouchArea {
                         width: parent.width;
                         height: parent.height;
-
-                        clicked => {
-                            root.visible = false;
-                        }
+                        clicked => { root.visible = false; }
                     }
-
-                    background: area1.has-hover ? #e85d4f : Palette.red;
-                    height: 32px;
-                    width: 32px;
 
                     VerticalLayout {
                         Image {
@@ -35,7 +51,7 @@ export component DroneMenu {
             }
 
             Text {
-                text: "What do you want to do?";
+                text: "Pick what to do with this drone.";
                 font-size: 16px;
                 vertical-alignment: center;
                 horizontal-alignment: center;
