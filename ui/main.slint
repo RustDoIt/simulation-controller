@@ -5,6 +5,7 @@ import { Palette } from "palette.slint";
 import { ListItem } from "list_item.slint";
 import { Button } from "button.slint";
 import { DroneMenu } from "drone_menu.slint";
+import { PDRMenu } from "pdr_menu.slint";
 
 //import { ContextMenu } from "context_menu.slint";
 
@@ -167,6 +168,7 @@ export component MainWindow inherits Window {
                         Button {
                             text: "Change PDR";
                             clicked => {
+                                pdrMenu.visible = true;
                                 debug("'Change PDR' button clicked");
                             }
                         }
@@ -177,6 +179,10 @@ export component MainWindow inherits Window {
     }
 
     droneMenu := DroneMenu {
+        visible: false;
+    }
+
+    pdrMenu := PDRMenu {
         visible: false;
     }
 }
