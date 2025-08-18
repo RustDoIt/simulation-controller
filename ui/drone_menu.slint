@@ -2,6 +2,8 @@ import { Palette } from "palette.slint";
 
 export component DroneMenu {
 
+    in property <string> drone;
+
     width: 1280px;
     height: 720px;
 
@@ -56,7 +58,7 @@ export component DroneMenu {
             }
 
             Text {
-                text: "Pick what to do with this drone.";
+                text: @tr("Pick what to do with {0}.", root.drone);
                 font-size: 16px;
                 vertical-alignment: center;
                 horizontal-alignment: center;

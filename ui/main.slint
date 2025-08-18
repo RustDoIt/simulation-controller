@@ -92,6 +92,7 @@ export component MainWindow inherits Window {
                             subtitle: "";
                             row_height: 48px;
                             mouseClick => {
+                                droneMenu.drone = self.title;
                                 droneMenu.visible = true;
                             }
                         }
@@ -166,6 +167,7 @@ export component MainWindow inherits Window {
                         Button {
                             text: "Change PDR";
                             clicked => {
+                                //pdrMenu.currentValue = ...
                                 pdrMenu.visible = true;
                                 debug("'Change PDR' button clicked");
                             }
@@ -182,5 +184,6 @@ export component MainWindow inherits Window {
 
     pdrMenu := PDRMenu {
         visible: false;
+        currentValue: "100";
     }
 }

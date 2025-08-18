@@ -2,6 +2,8 @@ import { Palette } from "palette.slint";
 
 export component PDRMenu {
 
+    in property <string> currentValue;
+
     width: 1280px;
     height: 720px;
 
@@ -73,7 +75,7 @@ export component PDRMenu {
 
                     TextInput {
 
-                        text: "100";
+                        text: root.currentValue;
                         font-size: 16px;
 
                         horizontal-alignment: center;
