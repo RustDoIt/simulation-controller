@@ -76,12 +76,16 @@ export component MainWindow inherits Window {
                         padding: 16px;
                         spacing: 8px;
 
+                        alignment: start;
+
                         Text {
                             text: "DRONES";
                             color: Palette.grey;
                             font-size: 16px;
                             font-weight: 800;
                         }
+                        
+                        Rectangle { height: 4px; }
 
                         for drone[i] in drones : ListItem {
                             stripe_color: Palette.orange;
@@ -93,7 +97,7 @@ export component MainWindow inherits Window {
                             }
                         }
                         
-                        Rectangle { height: 16px; }
+                        Rectangle { height: 24px; }
 
                         Text {
                             text: "CLIENTS";
@@ -102,6 +106,8 @@ export component MainWindow inherits Window {
                             font-weight: 800;
                         }
 
+                        Rectangle { height: 4px; }
+
                         for client[i] in clients : ListItem {
                             stripe_color: Palette.green;
                             title: client.title;
@@ -109,7 +115,7 @@ export component MainWindow inherits Window {
                             row_height: 64px;
                         }
                         
-                        Rectangle { height: 16px; }
+                        Rectangle { height: 24px; }
 
                         Text {
                             text: "SERVERS";
@@ -117,6 +123,8 @@ export component MainWindow inherits Window {
                             font-size: 16px;
                             font-weight: 800;
                         }
+
+                        Rectangle { height: 4px; }
 
                         for server[i] in servers : ListItem {
                             stripe_color: Palette.purple;
@@ -157,23 +165,9 @@ export component MainWindow inherits Window {
                         }
 
                         Button {
-                            text: "Remove Sender";
-                            clicked => {
-                                debug("'Remove Sender' button clicked");
-                            }
-                        }
-
-                        Button {
                             text: "Change PDR";
                             clicked => {
                                 debug("'Change PDR' button clicked");
-                            }
-                        }
-
-                        Button {
-                            text: "Crash Drone";
-                            clicked => {
-                                debug("'Crash Drone' button clicked");
                             }
                         }
                     }
