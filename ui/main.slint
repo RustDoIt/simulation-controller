@@ -154,7 +154,25 @@ export component MainWindow inherits Window {
             }
             
             //? Graph column
-            Rectangle { horizontal-stretch: 2; vertical-stretch: 1; background: Palette.bg; }
+            Rectangle { 
+                horizontal-stretch: 2; 
+                vertical-stretch: 1; 
+                background: Palette.bg; 
+                clip: true;
+
+                VerticalLayout {
+                    width: parent.width;
+                    height: parent.height;
+                    padding: 16px;
+                    alignment: center;
+
+                    Image {
+                        source: @image-url("../assets/images/placeholder.png");
+                        width: 624px;
+                        height: 624px;
+                    }
+                }
+            }
 
             //? Commands column
             Rectangle {
