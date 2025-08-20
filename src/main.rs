@@ -1,5 +1,8 @@
+mod utils;
+
 slint::include_modules!();
-use slint::{ModelRc, VecModel};
+
+use slint::{SharedString, ModelRc, VecModel};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let main_window = MainWindow::new()?;
@@ -19,6 +22,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Server { title: "Server 2".into() },
     ])));
     
+    main_window.on_validate_pdr(|input: SharedString, current: SharedString| -> SharedString {
+        utils::validate_pdr(&input, &current).into()
+    });
+
+    main_window.on_validate_node_id(|input: SharedString| -> () {
+        utils::validate_node_id(&input).into()
+    });
+
     main_window.run()?;
     Ok(())
 }

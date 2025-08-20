@@ -1,13 +1,6 @@
 import { Palette } from "palette.slint";
 
-export global PdrHelper {
-    callback validate_pdr(input: string, current: string) -> string;
-}
-
-export component PDRMenu {
-
-    in property <string> initialValue;
-    in-out property <string> currentValue: initialValue;
+export component AddSenderMenu {
 
     callback on_ok(value: string);
 
@@ -36,7 +29,7 @@ export component PDRMenu {
             HorizontalLayout {
 
                 Text {
-                    text: "Manage PDR";
+                    text: "Add Sender";
                     font-size: 18px;
                     font-weight: 600;
                     vertical-alignment: center;
@@ -64,7 +57,7 @@ export component PDRMenu {
             }
 
             Text {
-                text: "Insert a PDR between 0 and 100.";
+                text: "Enter the Node ID of the neighbor for the new sender.";
                 font-size: 16px;
                 vertical-alignment: center;
                 horizontal-alignment: center;
@@ -80,9 +73,8 @@ export component PDRMenu {
 
                     background: Palette.bg_alt;
 
-                    pdr_input := TextInput {
+                    node_id := TextInput {
 
-                        text: root.currentValue;
                         font-size: 16px;
 
                         horizontal-alignment: center;
@@ -101,7 +93,7 @@ export component PDRMenu {
                         height: parent.height;
 
                         clicked => {
-                            root.on_ok(pdr_input.text);
+                            root.on_ok(node_id.text);
                             root.visible = false;
                         }
                     }
