@@ -3,6 +3,10 @@ import { Palette } from "palette.slint";
 export component DroneMenu {
 
     in property <string> drone;
+    in property <string> id;
+    
+    callback remove_node(input: string);
+    callback crash_node(input: string);
 
     width: 1280px;
     height: 720px;
@@ -80,6 +84,7 @@ export component DroneMenu {
                                 height: parent.height;
 
                                 clicked => {
+                                    root.remove_node(root.id);
                                     root.visible = false;
                                 }
                             }
@@ -113,6 +118,7 @@ export component DroneMenu {
                                 height: parent.height;
 
                                 clicked => {
+                                    root.crash_node(root.id);
                                     root.visible = false;
                                 }
                             }

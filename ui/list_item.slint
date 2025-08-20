@@ -4,9 +4,10 @@ export component ListItem inherits Rectangle {
     in property <color> stripe_color;
     in property <string> title;
     in property <string> subtitle;
+    in property <string> id;
     in property <length> row_height;
 
-    callback mouseClick();
+    callback mouse_click();
 
     height: row_height;
     clip: true;
@@ -27,7 +28,7 @@ export component ListItem inherits Rectangle {
                 height: parent.height;
 
                 clicked => {
-                    mouseClick();
+                    mouse_click();
                 }
             }
 
