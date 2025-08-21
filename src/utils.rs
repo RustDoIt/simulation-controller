@@ -1,3 +1,10 @@
+use std::rc::Rc;
+use std::path::Path;
+
+use slint::{Image, VecModel};
+
+use crate::{Drone, Client, Server};
+
 pub fn validate_node_id(input: &str) -> bool {
 
     // Try to parse as a number
@@ -57,3 +64,12 @@ pub fn crash_node(input: &str) -> () {
         //TODO crash node
     }
 } 
+
+pub fn update_graph(
+    drones: Rc<VecModel<Drone>>,
+    clients: Rc<VecModel<Client>>,
+    servers: Rc<VecModel<Server>>) -> Image {
+    
+    //TODO replace this with the actual graph
+    Image::load_from_path(Path::new("assets/images/placeholder.png")).unwrap_or_default()
+}

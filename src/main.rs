@@ -16,16 +16,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     main_window.set_drones(ModelRc::from(drones_model.clone()));
     
     //TODO add existing clients
-    main_window.set_clients(ModelRc::new(VecModel::from(vec![
-        Client { title: "Client 1".into(), subtitle: "Web Client".into(), id: "3".into() },
+    let clients_model: Rc<VecModel<Client>> = Rc::new(VecModel::from(vec![
+        Client { title: "Client 1".into(), subtitle: "Web Client".into(),  id: "3".into() },
         Client { title: "Client 2".into(), subtitle: "Chat Client".into(), id: "4".into() },
-    ])));
+    ]));
+    main_window.set_clients(ModelRc::from(clients_model.clone()));
     
     //TODO add existing servers
-    main_window.set_servers(ModelRc::new(VecModel::from(vec![
+    let servers_model: Rc<VecModel<Server>> = Rc::new(VecModel::from(vec![
         Server { title: "Server 1".into(), id: "5".into() },
         Server { title: "Server 2".into(), id: "6".into() },
-    ])));
+    ]));
+    main_window.set_servers(ModelRc::from(servers_model.clone()));
     
     //TODO set current PDR
     main_window.set_initial_pdr(SharedString::from("0"));
@@ -35,10 +37,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     {
+        let mw_weak = main_window.as_weak();
         let drones_model = drones_model.clone();
+        let clients_model = clients_model.clone();
+        let servers_model = servers_model.clone();
+
         main_window.on_validate_node_id(move |input: SharedString| {
 
-            if(utils::validate_node_id(&input)) {
+            if utils::validate_node_id(&input) {
 
                 //TODO update ui
                 // drones_model.push(
@@ -47,13 +53,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 //     }
                 // );
 
+                if let Some(mw) = mw_weak.upgrade() {
+                    mw.set_graph_image(utils::update_graph(
+                        drones_model.clone(),
+                        clients_model.clone(),
+                        servers_model.clone()
+                    ));
+                }
             }
 
         });
     }
 
     {
+        let mw_weak = main_window.as_weak();
         let drones_model = drones_model.clone();
+        let clients_model = clients_model.clone();
+        let servers_model = servers_model.clone();
+
         main_window.on_remove_node(move |input: SharedString| {
             if let Some(pos) = (0..drones_model.row_count())
                 .position(|i| drones_model
@@ -64,12 +81,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 utils::remove_node(&input);
 
                 drones_model.remove(pos);
+
+                if let Some(mw) = mw_weak.upgrade() {
+                    mw.set_graph_image(utils::update_graph(
+                        drones_model.clone(),
+                        clients_model.clone(),
+                        servers_model.clone()
+                    ));
+                }
             }
         });
     }
 
     {
+        let mw_weak = main_window.as_weak();
         let drones_model = drones_model.clone();
+        let clients_model = clients_model.clone();
+        let servers_model = servers_model.clone();
+
         main_window.on_crash_node(move |input: SharedString| {
             if let Some(pos) = (0..drones_model.row_count())
                 .position(|i| drones_model
@@ -80,6 +109,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 utils::crash_node(&input);
 
                 drones_model.remove(pos);
+
+                if let Some(mw) = mw_weak.upgrade() {
+                    mw.set_graph_image(utils::update_graph(
+                        drones_model.clone(),
+                        clients_model.clone(),
+                        servers_model.clone()
+                    ));
+                }
             }
         });
     }

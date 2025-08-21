@@ -29,6 +29,7 @@ export component MainWindow inherits Window {
     in property <[Client]> clients;
     in property <[Server]> servers;
 
+    in property <image> graph_image;
     in property <string> initial_pdr;
 
     callback validate_pdr(input: string, current: string) -> string;
@@ -167,7 +168,7 @@ export component MainWindow inherits Window {
                     alignment: center;
 
                     Image {
-                        source: @image-url("../assets/images/placeholder.png");
+                        source: root.graph_image;
                         width: 624px;
                         height: 624px;
                     }
