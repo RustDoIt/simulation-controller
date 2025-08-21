@@ -29,7 +29,7 @@ export component MainWindow inherits Window {
     in property <[Client]> clients;
     in property <[Server]> servers;
 
-    in property <image> graph_image;
+    in property <image> graph_image: @image-url("../assets/images/placeholder.png");
     in property <string> initial_pdr;
 
     callback validate_pdr(input: string, current: string) -> string;
@@ -195,12 +195,18 @@ export component MainWindow inherits Window {
 
                         Button {
                             text: "Add Sender";
-                            clicked => {addSenderMenu.visible = true;}
+                            clicked => {
+                                addSenderMenu.visible = true;
+                                addSenderMenu.grab_focus();
+                            }
                         }
 
                         pdr_button := Button {
                             text: @tr("Change PDR - {}%", initial_pdr);
-                            clicked => {pdrMenu.visible = true;}
+                            clicked => {
+                                pdrMenu.visible = true;
+                                pdrMenu.grab_focus(); 
+                            }
                         }
                     }
                 }

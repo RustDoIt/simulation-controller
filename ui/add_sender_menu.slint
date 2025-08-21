@@ -110,4 +110,10 @@ export component AddSenderMenu {
             }
         }
     }
+
+    callback grab_focus();
+    grab_focus => {
+        node_id.focus();
+        node_id.set-selection-offsets(node_id.text.character-count, node_id.text.character-count);
+    }
 }

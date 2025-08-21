@@ -118,4 +118,10 @@ export component PDRMenu {
             }
         }
     }
+
+    callback grab_focus();
+    grab_focus => {
+        pdr_input.focus();
+        pdr_input.set-selection-offsets(pdr_input.text.character-count, pdr_input.text.character-count);
+    }
 }
