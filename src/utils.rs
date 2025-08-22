@@ -8,12 +8,12 @@ use crate::{Drone, Client, Server};
 
 static LOGGER: OnceCell<Box<dyn Fn(SharedString) + Send + Sync + 'static>> = OnceCell::new();
 
-/// Register the logger callback (called from main.rs).
+// Register the logger callback (called from main.rs).
 pub fn set_logger(cb: Box<dyn Fn(SharedString) + Send + Sync + 'static>) {
     let _ = LOGGER.set(cb);
 }
 
-/// Log a message from anywhere (including this module).
+//TODO log events
 pub fn log<S: Into<SharedString>>(msg: S) {
     if let Some(cb) = LOGGER.get() {
         cb(msg.into());
