@@ -1,9 +1,24 @@
 use std::rc::Rc;
 use std::path::Path;
 
-use slint::{Image, VecModel};
+use once_cell::sync::OnceCell;
+use slint::{Image, SharedString, VecModel};
 
 use crate::{Drone, Client, Server};
+
+static LOGGER: OnceCell<Box<dyn Fn(SharedString) + Send + Sync + 'static>> = OnceCell::new();
+
+/// Register the logger callback (called from main.rs).
+pub fn set_logger(cb: Box<dyn Fn(SharedString) + Send + Sync + 'static>) {
+    let _ = LOGGER.set(cb);
+}
+
+/// Log a message from anywhere (including this module).
+pub fn log<S: Into<SharedString>>(msg: S) {
+    if let Some(cb) = LOGGER.get() {
+        cb(msg.into());
+    }
+}
 
 pub fn validate_node_id(input: &str) -> bool {
 

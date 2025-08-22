@@ -32,12 +32,16 @@ export component MainWindow inherits Window {
     in property <image> graph_image: @image-url("../assets/images/placeholder.png");
     in property <string> initial_pdr;
 
+    in property <[string]> logs;
+
     callback validate_pdr(input: string, current: string) -> string;
     callback validate_node_id(input: string);
 
     callback remove_node(input: string);
     callback crash_node(input: string);
 
+    callback add_log(input: string);
+    
     width: 1280px;
     height: 720px;
     default-font-family: "Satoshi";
@@ -208,6 +212,47 @@ export component MainWindow inherits Window {
                                 pdrMenu.grab_focus(); 
                             }
                         }
+
+                        Rectangle { height: 24px; }
+
+                        Text {
+                            text: "LOGS";
+                            color: Palette.grey;
+                            font-size: 16px;
+                            font-weight: 800;
+                        }
+
+                        Rectangle {
+                            background: Palette.bg;
+                            border-width: 1px;
+                            border-color: Palette.bg_alt;
+
+                            height: 450px;
+
+                            Flickable {
+                                width: parent.width;
+                                height: parent.height;
+                                
+                                VerticalLayout {
+                                    for log[i] in logs : Text {
+                                        text: log;
+                                    }
+                                }
+
+                                // log_box := Text {
+                                //     text: "";
+                                //     wrap: word-wrap;
+                                //     horizontal-alignment: left;
+                                //     vertical-alignment: top;
+
+                                //     width: parent.width;
+                                //     height: self.preferred-height;
+                                //     y: 0px;
+                                // }
+                            }
+                        }
+
+
                     }
                 }
             }
