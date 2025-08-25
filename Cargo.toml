@@ -5,8 +5,13 @@ edition = "2021"
 
 [dependencies]
 chrono = "0.4.41"
-slint = "1.3"
+slint = "1.12.1"
 once_cell = "1.19"
+crossbeam = "0.8.4"
+common = { path = "../common" }
+network-initializer = { path = "../network-initializer" }
+wg_internal = { git = "https://github.com/WGL-2024/WGL_repo_2024.git", features = ["debug"] }
+ctrlc = "3.4.7"
 
 [build-dependencies]
 slint-build = "1.3"

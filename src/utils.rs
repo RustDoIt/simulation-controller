@@ -35,7 +35,7 @@ pub fn validate_node_id(input: &str) -> bool {
     return false;
 }
 
-pub fn validate_pdr(input: &str, current: &str) -> String {
+pub fn validate_pdr(input: &str, current: &str) {
 
     // Try to parse as a number
     if let Ok(val) = input.parse::<f64>() {
@@ -47,15 +47,10 @@ pub fn validate_pdr(input: &str, current: &str) -> String {
             if input != current {
 
                 //TODO set PDR
-
-                return input.to_string();
             }
 
         }
     }
-
-    // Fallback: keep current value
-    current.to_string()
 }
 
 pub fn remove_node(input: &str) -> () {

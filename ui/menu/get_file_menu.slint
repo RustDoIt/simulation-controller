@@ -1,0 +1,133 @@
+import { Palette } from "../palette.slint";
+
+import { SimulationControllerCommand, SimulationControllerType } from "../button.slint";
+
+export struct GetFile {
+    uuid: string,
+}
+
+export component GetFileMenu {
+
+    in-out property <SimulationControllerCommand> node_command;
+    in-out property <SimulationControllerType> node_type;
+    in-out property <string> node_id;
+
+    callback on_ok(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: GetFile);
+
+    width: 1280px;
+    height: 720px;
+
+    init => {
+        self.visible = false;
+    }
+
+    TouchArea {
+        width: parent.width;
+        height: parent.height;
+    }
+
+    Rectangle {
+        background: black;
+        opacity: 0.75;
+    }
+
+    Rectangle {
+
+        width: 480px;
+        height: 200px;
+
+        background: Palette.bg;
+
+        VerticalLayout {
+            padding: 16px;
+            HorizontalLayout {
+
+                Text {
+                    text: "Get File";
+                    font-size: 18px;
+                    font-weight: 600;
+                    vertical-alignment: center;
+                    horizontal-alignment: left;
+                    horizontal-stretch: 1; 
+                }
+
+                Rectangle {
+                    height: 32px;
+                    width: 32px;
+                    background: area1.has-hover ? #e05244 : Palette.red;
+
+                    area1 := TouchArea {
+                        width: parent.width;
+                        height: parent.height;
+                        clicked => { root.visible = false; }
+                    }
+
+                    VerticalLayout {
+                        Image {
+                            source: @image-url("../../assets/images/icons/close.png");
+                        }
+                    }
+                }
+            }
+
+            Text {
+                text: "Enter the UUID of the file you want to retrieve.";
+                font-size: 16px;
+                vertical-alignment: center;
+                horizontal-alignment: center;
+
+                wrap: TextWrap.word-wrap;
+            }
+
+            HorizontalLayout {
+
+                spacing: 16px;
+
+                Rectangle {
+                
+                    height: 48px;
+
+                    background: Palette.bg_alt;
+
+                    uuid := TextInput {
+
+                        font-size: 16px;
+
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+
+                Rectangle {
+
+                    width: 96px;
+
+                    area2 := TouchArea {
+                        width: parent.width;
+                        height: parent.height;
+
+                        clicked => {
+                            root.on_ok(root.node_command, root.node_type, root.node_id, {uuid: uuid.text });
+                            root.visible = false;
+                        }
+                    }
+
+                    background: area2.has-hover ? Palette.bg_highlight : Palette.bg_alt;
+
+                    Text {
+                        text: "OK";
+                        font-size: 16px;
+                        vertical-alignment: center;
+                        horizontal-alignment: center;
+                    }
+                }
+            }
+        }
+    }
+
+    callback grab_focus();
+    grab_focus => {
+        uuid.focus();
+        uuid.set-selection-offsets(uuid.text.character-count, uuid.text.character-count);
+    }
+}

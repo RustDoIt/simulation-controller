@@ -2,15 +2,22 @@ import "../assets/fonts/Satoshi-Regular.ttf";
 
 import { Palette } from "palette.slint";
 
-import { ListItem } from "list_item.slint";
-import { Button } from "button.slint";
-import { DroneMenu } from "drone_menu.slint";
-import { PDRMenu } from "pdr_menu.slint";
-import { AddSenderMenu } from "add_sender_menu.slint";
+import { SimulationControllerCommand, SimulationControllerType, DroneButton, ClientButton, ServerButton } from "button.slint";
+
+import { AddSender, AddSenderMenu } from "menu/add_sender_menu.slint";
+import { RemoveSender, RemoveSenderMenu } from "menu/remove_sender_menu.slint";
+import { SendMessage, SendMessageMenu } from "menu/send_message_menu.slint";
+import { GetFile, GetFileMenu } from "menu/get_file_menu.slint";
+import { GetMediaFile, GetMediaFileMenu } from "menu/get_media_file_menu.slint";
+import { AddTextFileFromPath, AddTextFileFromPathMenu } from "menu/add_text_file_from_path_menu.slint";
+import { AddMediaFileFromPath, AddMediaFileFromPathMenu } from "menu/add_media_file_from_path_menu.slint";
+import { RemoveTextFile, RemoveTextFileMenu } from "menu/remove_text_file_menu.slint";
+import { RemoveMediaFile, RemoveMediaFileMenu } from "menu/remove_media_file_menu.slint";
 
 export struct Drone {
     title: string,
     id: string,
+    pdr: string,
 }
 
 export struct Client {
@@ -21,6 +28,7 @@ export struct Client {
 
 export struct Server {
     title: string,
+    subtitle: string,
     id: string,
 }
 
@@ -34,14 +42,30 @@ export component MainWindow inherits Window {
 
     in property <[string]> logs;
 
-    callback validate_pdr(input: string, current: string) -> string;
-    callback validate_node_id(input: string);
-
-    callback remove_node(input: string);
-    callback crash_node(input: string);
-
     callback add_log(input: string);
     
+    callback menu_clicked(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string);
+
+    callback add_sender(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: AddSender);
+    callback remove_sender(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: RemoveSender);
+    callback shutdown(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string);
+
+    callback get_chats_history(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string);
+    callback get_registered_clients(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string);
+    callback send_message(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: SendMessage);
+
+    callback get_cached_files(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string);
+    callback get_file(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: GetFile);
+    callback get_text_files(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string);
+    callback get_media_files(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string);
+    callback get_media_file(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: GetMediaFile);
+    //callback add_text_file(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: AddTextFile);
+    callback add_text_file_from_path(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: AddTextFileFromPath);
+    //callback add_media_file(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: AddMediaFile);
+    callback add_media_file_from_path(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: AddMediaFileFromPath);
+    callback remove_text_file(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: RemoveTextFile);
+    callback remove_media_file(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: RemoveMediaFile);
+
     width: 1280px;
     height: 720px;
     default-font-family: "Satoshi";
@@ -103,17 +127,85 @@ export component MainWindow inherits Window {
                         
                         Rectangle { height: 4px; }
 
-                        for drone[i] in drones : ListItem {
-                            stripe_color: Palette.orange;
+                        for drone[i] in drones : DroneButton {
                             title: drone.title;
-                            subtitle: "";
-                            id: drone.id;
-                            row_height: 48px;
+                            subtitle: "PDR " + drone.pdr + "%";
 
-                            mouse_click => {
-                                droneMenu.drone = self.title;
-                                droneMenu.id = self.id;
-                                droneMenu.visible = true;
+                            node_id: drone.id;
+
+                            item_clicked(node_command, node_type, node_id) => {
+                                if node_command == SimulationControllerCommand.AddSender {
+                                    add_sender_menu.node_command = node_command;
+                                    add_sender_menu.node_type = node_type;
+                                    add_sender_menu.node_id = node_id;
+                                    add_sender_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.RemoveSender {
+                                    remove_sender_menu.node_command = node_command;
+                                    remove_sender_menu.node_type = node_type;
+                                    remove_sender_menu.node_id = node_id;
+                                    remove_sender_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.Shutdown {
+                                    shutdown(node_command, node-type, node_id);
+                                }
+                                else if node_command == SimulationControllerCommand.GetChatsHistory {
+                                    get_chats_history(node_command, node-type, node_id);
+                                }
+                                else if node_command == SimulationControllerCommand.GetRegisteredClients {
+                                    get_registered_clients(node_command, node-type, node_id);
+                                }
+                                else if node_command == SimulationControllerCommand.SendMessage {
+                                    send_message_menu.node_command = node_command;
+                                    send_message_menu.node_type = node_type;
+                                    send_message_menu.node_id = node_id;
+                                    send_message_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.GetCachedFiles {
+                                    get_cached_files(node_command, node-type, node_id);
+                                }
+                                else if node_command == SimulationControllerCommand.GetFile {
+                                    get_file_menu.node_command = node_command;
+                                    get_file_menu.node_type = node_type;
+                                    get_file_menu.node_id = node_id;
+                                    get_file_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.GetTextFiles {
+                                    get_text_files(node_command, node-type, node_id);
+                                }
+                                else if node_command == SimulationControllerCommand.GetMediaFiles {
+                                    get_media_files(node_command, node-type, node_id);
+                                }
+                                else if node_command == SimulationControllerCommand.GetMediaFile {
+                                    get_media_file_menu.node_command = node_command;
+                                    get_media_file_menu.node_type = node_type;
+                                    get_media_file_menu.node_id = node_id;
+                                    get_media_file_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.AddTextFileFromPath {
+                                    add_text_file_from_path_menu.node_command = node_command;
+                                    add_text_file_from_path_menu.node_type = node_type;
+                                    add_text_file_from_path_menu.node_id = node_id;
+                                    add_text_file_from_path_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.AddMediaFileFromPath {
+                                    add_media_file_from_path_menu.node_command = node_command;
+                                    add_media_file_from_path_menu.node_type = node_type;
+                                    add_media_file_from_path_menu.node_id = node_id;
+                                    add_media_file_from_path_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.RemoveTextFile {
+                                    remove_text_file_menu.node_command = node_command;
+                                    remove_text_file_menu.node_type = node_type;
+                                    remove_text_file_menu.node_id = node_id;
+                                    remove_text_file_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.RemoveMediaFile {
+                                    remove_media_file_menu.node_command = node_command;
+                                    remove_media_file_menu.node_type = node_type;
+                                    remove_media_file_menu.node_id = node_id;
+                                    remove_media_file_menu.visible = true;
+                                }
                             }
                         }
                         
@@ -128,12 +220,86 @@ export component MainWindow inherits Window {
 
                         Rectangle { height: 4px; }
 
-                        for client[i] in clients : ListItem {
-                            stripe_color: Palette.green;
+                        for client[i] in clients : ClientButton {
                             title: client.title;
                             subtitle: client.subtitle;
-                            id: client.id;
-                            row_height: 64px;
+
+                            node_id: client.id;
+
+                            item_clicked(node_command, node_type, node_id) => {
+                                if node_command == SimulationControllerCommand.AddSender {
+                                    add_sender_menu.node_command = node_command;
+                                    add_sender_menu.node_type = node_type;
+                                    add_sender_menu.node_id = node_id;
+                                    add_sender_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.RemoveSender {
+                                    remove_sender_menu.node_command = node_command;
+                                    remove_sender_menu.node_type = node_type;
+                                    remove_sender_menu.node_id = node_id;
+                                    remove_sender_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.Shutdown {
+                                    shutdown(node_command, node-type, node_id);
+                                }
+                                else if node_command == SimulationControllerCommand.GetChatsHistory {
+                                    get_chats_history(node_command, node-type, node_id);
+                                }
+                                else if node_command == SimulationControllerCommand.GetRegisteredClients {
+                                    get_registered_clients(node_command, node-type, node_id);
+                                }
+                                else if node_command == SimulationControllerCommand.SendMessage {
+                                    send_message_menu.node_command = node_command;
+                                    send_message_menu.node_type = node_type;
+                                    send_message_menu.node_id = node_id;
+                                    send_message_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.GetCachedFiles {
+                                    get_cached_files(node_command, node-type, node_id);
+                                }
+                                else if node_command == SimulationControllerCommand.GetFile {
+                                    get_file_menu.node_command = node_command;
+                                    get_file_menu.node_type = node_type;
+                                    get_file_menu.node_id = node_id;
+                                    get_file_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.GetTextFiles {
+                                    get_text_files(node_command, node-type, node_id);
+                                }
+                                else if node_command == SimulationControllerCommand.GetMediaFiles {
+                                    get_media_files(node_command, node-type, node_id);
+                                }
+                                else if node_command == SimulationControllerCommand.GetMediaFile {
+                                    get_media_file_menu.node_command = node_command;
+                                    get_media_file_menu.node_type = node_type;
+                                    get_media_file_menu.node_id = node_id;
+                                    get_media_file_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.AddTextFileFromPath {
+                                    add_text_file_from_path_menu.node_command = node_command;
+                                    add_text_file_from_path_menu.node_type = node_type;
+                                    add_text_file_from_path_menu.node_id = node_id;
+                                    add_text_file_from_path_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.AddMediaFileFromPath {
+                                    add_media_file_from_path_menu.node_command = node_command;
+                                    add_media_file_from_path_menu.node_type = node_type;
+                                    add_media_file_from_path_menu.node_id = node_id;
+                                    add_media_file_from_path_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.RemoveTextFile {
+                                    remove_text_file_menu.node_command = node_command;
+                                    remove_text_file_menu.node_type = node_type;
+                                    remove_text_file_menu.node_id = node_id;
+                                    remove_text_file_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.RemoveMediaFile {
+                                    remove_media_file_menu.node_command = node_command;
+                                    remove_media_file_menu.node_type = node_type;
+                                    remove_media_file_menu.node_id = node_id;
+                                    remove_media_file_menu.visible = true;
+                                }
+                            }
                         }
                         
                         Rectangle { height: 24px; }
@@ -147,12 +313,86 @@ export component MainWindow inherits Window {
 
                         Rectangle { height: 4px; }
 
-                        for server[i] in servers : ListItem {
-                            stripe_color: Palette.purple;
+                        for server[i] in servers : ServerButton {
                             title: server.title;
-                            subtitle: "";
-                            id: server.id;
-                            row_height: 48px;
+                            subtitle: server.subtitle;
+
+                            node_id: server.id;
+
+                            item_clicked(node_command, node_type, node_id) => {
+                                if node_command == SimulationControllerCommand.AddSender {
+                                    add_sender_menu.node_command = node_command;
+                                    add_sender_menu.node_type = node_type;
+                                    add_sender_menu.node_id = node_id;
+                                    add_sender_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.RemoveSender {
+                                    remove_sender_menu.node_command = node_command;
+                                    remove_sender_menu.node_type = node_type;
+                                    remove_sender_menu.node_id = node_id;
+                                    remove_sender_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.Shutdown {
+                                    shutdown(node_command, node-type, node_id);
+                                }
+                                else if node_command == SimulationControllerCommand.GetChatsHistory {
+                                    get_chats_history(node_command, node-type, node_id);
+                                }
+                                else if node_command == SimulationControllerCommand.GetRegisteredClients {
+                                    get_registered_clients(node_command, node-type, node_id);
+                                }
+                                else if node_command == SimulationControllerCommand.SendMessage {
+                                    send_message_menu.node_command = node_command;
+                                    send_message_menu.node_type = node_type;
+                                    send_message_menu.node_id = node_id;
+                                    send_message_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.GetCachedFiles {
+                                    get_cached_files(node_command, node-type, node_id);
+                                }
+                                else if node_command == SimulationControllerCommand.GetFile {
+                                    get_file_menu.node_command = node_command;
+                                    get_file_menu.node_type = node_type;
+                                    get_file_menu.node_id = node_id;
+                                    get_file_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.GetTextFiles {
+                                    get_text_files(node_command, node-type, node_id);
+                                }
+                                else if node_command == SimulationControllerCommand.GetMediaFiles {
+                                    get_media_files(node_command, node-type, node_id);
+                                }
+                                else if node_command == SimulationControllerCommand.GetMediaFile {
+                                    get_media_file_menu.node_command = node_command;
+                                    get_media_file_menu.node_type = node_type;
+                                    get_media_file_menu.node_id = node_id;
+                                    get_media_file_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.AddTextFileFromPath {
+                                    add_text_file_from_path_menu.node_command = node_command;
+                                    add_text_file_from_path_menu.node_type = node_type;
+                                    add_text_file_from_path_menu.node_id = node_id;
+                                    add_text_file_from_path_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.AddMediaFileFromPath {
+                                    add_media_file_from_path_menu.node_command = node_command;
+                                    add_media_file_from_path_menu.node_type = node_type;
+                                    add_media_file_from_path_menu.node_id = node_id;
+                                    add_media_file_from_path_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.RemoveTextFile {
+                                    remove_text_file_menu.node_command = node_command;
+                                    remove_text_file_menu.node_type = node_type;
+                                    remove_text_file_menu.node_id = node_id;
+                                    remove_text_file_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.RemoveMediaFile {
+                                    remove_media_file_menu.node_command = node_command;
+                                    remove_media_file_menu.node_type = node_type;
+                                    remove_media_file_menu.node_id = node_id;
+                                    remove_media_file_menu.visible = true;
+                                }
+                            }
                         }
                     }
                 }
@@ -164,7 +404,7 @@ export component MainWindow inherits Window {
                 vertical-stretch: 1; 
                 background: Palette.bg; 
                 clip: true;
-
+                
                 VerticalLayout {
                     width: parent.width;
                     height: parent.height;
@@ -189,32 +429,15 @@ export component MainWindow inherits Window {
                 Flickable {
                     width: parent.width;
                     height: parent.height;
-
+                
                     VerticalLayout {
                         width: parent.width;
+
                         padding: 16px;
                         spacing: 8px;
 
                         alignment: start;
-
-                        Button {
-                            text: "Add Sender";
-                            clicked => {
-                                addSenderMenu.visible = true;
-                                addSenderMenu.grab_focus();
-                            }
-                        }
-
-                        pdr_button := Button {
-                            text: @tr("Change PDR - {}%", initial_pdr);
-                            clicked => {
-                                pdrMenu.visible = true;
-                                pdrMenu.grab_focus(); 
-                            }
-                        }
-
-                        Rectangle { height: 24px; }
-
+                        
                         Text {
                             text: "LOGS";
                             color: Palette.grey;
@@ -222,66 +445,70 @@ export component MainWindow inherits Window {
                             font-weight: 800;
                         }
 
-                        Rectangle {
-                            background: Palette.bg;
-                            border-width: 1px;
-                            border-color: Palette.bg_alt;
+                        Rectangle { height: 4px; }
 
-                            height: 450px;
-
-                            Flickable {
-                                width: parent.width;
-                                height: parent.height;
-                                
-                                VerticalLayout {
-                                    for log[i] in logs : Text {
-                                        text: log;
-                                    }
-                                }
-
-                                // log_box := Text {
-                                //     text: "";
-                                //     wrap: word-wrap;
-                                //     horizontal-alignment: left;
-                                //     vertical-alignment: top;
-
-                                //     width: parent.width;
-                                //     height: self.preferred-height;
-                                //     y: 0px;
-                                // }
-                            }
+                        for log[i] in logs : Text {
+                            text: log;
                         }
-
-
+                        
                     }
                 }
+                
             }
         }
     }
 
-    droneMenu := DroneMenu {
-        visible: false;
-        remove_node(input) => {
-            root.remove_node(input);
-        }
-        crash_node(input) => {
-            root.crash_node(input);
+    add_sender_menu := AddSenderMenu {
+        on_ok(node_command, node_type, node_id, args) => {
+            root.add_sender(node_command, node_type, node_id, args);
         }
     }
 
-    pdrMenu := PDRMenu {
-        visible: false;
-        initialValue: initial_pdr;
-        on_ok(value) => {
-            pdrMenu.currentValue = root.validate_pdr(value, pdrMenu.currentValue);
-            pdr_button.text = @tr("Change PDR - {}%", pdrMenu.currentValue);
+    remove_sender_menu := RemoveSenderMenu {
+        on_ok(node_command, node_type, node_id, args) => {
+            root.remove_sender(node_command, node_type, node_id, args);
         }
     }
 
-    addSenderMenu := AddSenderMenu {
-        visible: false;
-        on_ok(value) => {
-            root.validate_node_id(value);
+    send_message_menu := SendMessageMenu {
+        on_ok(node_command, node_type, node_id, args) => {
+            root.send_message(node_command, node_type, node_id, args);
+        }
+    }
+
+    get_file_menu := GetFileMenu {
+        on_ok(node_command, node_type, node_id, args) => {
+            root.get_file(node_command, node_type, node_id, args);
+        }
+    }
+
+    get_media_file_menu := GetMediaFileMenu {
+        on_ok(node_command, node_type, node_id, args) => {
+            root.get_media_file(node_command, node_type, node_id, args);
+        }
+    }
+
+    add_text_file_from_path_menu := AddTextFileFromPathMenu {
+        on_ok(node_command, node_type, node_id, args) => {
+            root.add_text_file_from_path(node_command, node_type, node_id, args);
+        }
+    }
+
+    add_media_file_from_path_menu := AddMediaFileFromPathMenu {
+        on_ok(node_command, node_type, node_id, args) => {
+            root.add_media_file_from_path(node_command, node_type, node_id, args);
+        }
+    }
+
+    remove_text_file_menu := RemoveTextFileMenu {
+        on_ok(node_command, node_type, node_id, args) => {
+            root.remove_text_file(node_command, node_type, node_id, args);
+        }
+    }
+
+    remove_media_file_menu := RemoveMediaFileMenu {
+        on_ok(node_command, node_type, node_id, args) => {
+            root.remove_media_file(node_command, node_type, node_id, args);
         }
     }
 }

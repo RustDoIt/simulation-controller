@@ -1,11 +1,25 @@
-import { Palette } from "palette.slint";
+import { Palette } from "../palette.slint";
+
+import { SimulationControllerCommand, SimulationControllerType } from "../button.slint";
+
+export struct AddSender {
+    node_id: string
+}
 
 export component AddSenderMenu {
 
-    callback on_ok(value: string);
+    in-out property <SimulationControllerCommand> node_command;
+    in-out property <SimulationControllerType> node_type;
+    in-out property <string> node_id;
+
+    callback on_ok(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: AddSender);
 
     width: 1280px;
     height: 720px;
+
+    init => {
+        self.visible = false;
+    }
 
     TouchArea {
         width: parent.width;
@@ -50,7 +64,7 @@ export component AddSenderMenu {
 
                     VerticalLayout {
                         Image {
-                            source: @image-url("../assets/images/icons/close.png");
+                            source: @image-url("../../assets/images/icons/close.png");
                         }
                     }
                 }
@@ -73,7 +87,7 @@ export component AddSenderMenu {
 
                     background: Palette.bg_alt;
 
-                    node_id := TextInput {
+                    node_id2 := TextInput {
 
                         font-size: 16px;
 
@@ -93,7 +107,7 @@ export component AddSenderMenu {
                         height: parent.height;
 
                         clicked => {
-                            root.on_ok(node_id.text);
+                            root.on_ok(root.node_command, root.node_type, root.node_id, {node_id: node_id2.text});
                             root.visible = false;
                         }
                     }
@@ -113,7 +127,7 @@ export component AddSenderMenu {
 
     callback grab_focus();
     grab_focus => {
-        node_id.focus();
-        node_id.set-selection-offsets(node_id.text.character-count, node_id.text.character-count);
+        node_id2.focus();
+        node_id2.set-selection-offsets(node_id2.text.character-count, node_id2.text.character-count);
     }
 }

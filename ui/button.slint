@@ -1,28 +1,268 @@
 import { Palette } from "palette.slint";
 
-export component Button {
-    in property <string> text;
-    callback clicked;
+export enum SimulationControllerCommand {
+    AddSender,
+    RemoveSender,
+    Shutdown,
 
-    preferred-width: 100%;
-    preferred-height: 48px;
+    GetChatsHistory,
+    GetRegisteredClients,
+    SendMessage,
+
+    GetCachedFiles,
+    GetFile,
+    GetTextFiles,
+    GetTextFile,
+    GetMediaFiles,
+    GetMediaFile,
+    AddTextFile,
+    AddTextFileFromPath,
+    AddMediaFile,
+    AddMediaFileFromPath,
+    RemoveTextFile,
+    RemoveMediaFile,
+}
+
+export enum SimulationControllerType {
+    Drone,
+    ChatClient,
+    WebBrowser,
+    ChatServer,
+    WebServer
+}
+
+export struct Item {
+    label: string,
+    node_command: SimulationControllerCommand
+}
+
+export component MenuItem inherits Rectangle {
+
+    in property <string> label;
+    in property <SimulationControllerCommand> node_command;
+
+    callback clicked(node_command: SimulationControllerCommand);
+
+    height: 48px;
+
+    area1 := TouchArea {
+        clicked => {
+            clicked(root.node_command);
+        }
+    }
+
+    background: area1.has-hover ? Palette.bg_highlight : Palette.bg_alt;
+
+    Text {
+        text: label;
+        font-size: 16px;
+    }
+
+}
+
+export component Button {
+
+    in property <color> stripe_color;
+
+    in property <string> title;
+    in property <string> subtitle;
+
+    in property <length> popup_border_width: 2px;
+
+    in-out property <length> popup_x: 0px;
+    in-out property <length> popup_y: 0px;
+
+    in property <length> popup_width: 300px;
+    in property <length> popup_height: items.length * 48px + popup_border_width * 2;
+
+    in property <[Item]> items;
+    in property <SimulationControllerType> node_type;
+    in property <string> node_id;
+
+    callback mouse_left_click();
+    callback mouse_right_click();
+
+    callback item_clicked(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string);
+
+    height: subtitle.is-empty ? 48px : 64px;
 
     Rectangle {
-        width: parent.width;
-        height: parent.height;
-
-        Text {
-            text: root.text;
-            font-size: 16px;
-            vertical-alignment: center;
-            horizontal-alignment: center;
-        }
 
         area := TouchArea {
-            mouse-cursor: pointer;
-            clicked => { root.clicked(); }
+            width: parent.width;
+            height: parent.height;
+
+            clicked => {
+                mouse_left_click();
+            }
+
+            pointer-event(event) => {
+                if (event.kind == PointerEventKind.down && event.button == PointerEventButton.right) {
+                    root.popup_x = self.mouse-x;
+                    root.popup_y = self.mouse-y;
+
+                    menu.show();
+                }
+            }
         }
 
-        background: area.has-hover ? Palette.bg_highlight : Palette.bg_alt;
+        clip: true;
+
+        HorizontalLayout {
+
+            Rectangle {
+                horizontal-stretch: 0.05;
+                vertical-stretch: 1;
+                background: stripe_color;
+            }
+
+            Rectangle {
+                horizontal-stretch: 1;
+                vertical-stretch: 1;
+
+                background: area.has-hover ? Palette.bg_highlight : Palette.bg_alt;
+
+                VerticalLayout {
+                    width: parent.width;
+                    height: parent.height;
+                    padding: 12px;
+                    alignment: subtitle == "" ? start : center;
+
+                    Text { 
+                        text: title; 
+                        color: white; 
+                        font-size: 16px; 
+                    }
+
+                    if subtitle != "" : Text { 
+                        text: subtitle; 
+                        color: Palette.grey; 
+                        font-weight: 600;
+                        font-size: 12px; 
+                    }
+                }
+            }
+        }
+
+        menu := PopupWindow {
+            x: popup_x;
+            y: popup_y;
+
+            width: popup_width;
+            height: popup_height;
+
+            Rectangle {
+                background: Palette.bg_alt;
+
+                border-color: Palette.bg_highlight;
+                border-width: popup_border_width;
+
+                Flickable {
+
+                    width: parent.width;
+                    height: parent.height;
+                    
+                    VerticalLayout {
+
+                        padding: popup_border_width;
+
+                        alignment: start;
+
+                        for item[i] in items: MenuItem {
+                            label: item.label;
+                            node_command: item.node_command;
+
+                            clicked(node_command) => {
+                                root.item_clicked(node_command, root.node_type, root.node_id);
+                            }
+                        }
+                    }
+
+                }
+            }
+
+        }
     }
+
+    
+}
+
+export component DroneButton inherits Button {
+    stripe_color: Palette.orange;
+
+    items: [
+        {label: "Add Sender", node_command: SimulationControllerCommand.AddSender},
+        {label: "Remove Sender", node_command: SimulationControllerCommand.RemoveSender},
+        {label: "Shutdown", node_command: SimulationControllerCommand.Shutdown},
+    ];
+
+    node_type: SimulationControllerType.Drone;
+}
+
+export component ClientButton inherits Button {
+    stripe_color: Palette.green;
+
+    property <[Item]> chat_items: [
+        {label: "Add Sender", node_command: SimulationControllerCommand.AddSender},
+        {label: "Remove Sender", node_command: SimulationControllerCommand.RemoveSender},
+        {label: "Shutdown", node_command: SimulationControllerCommand.Shutdown},
+        {label: "Get Chats History", node_command: SimulationControllerCommand.GetChatsHistory},
+        {label: "Get Registered Clients", node_command: SimulationControllerCommand.GetRegisteredClients},
+        {label: "Send Message", node_command: SimulationControllerCommand.SendMessage},
+    ];
+
+    property <[Item]> web_items: [
+        {label: "Add Sender", node_command: SimulationControllerCommand.AddSender},
+        {label: "Remove Sender", node_command: SimulationControllerCommand.RemoveSender},
+        {label: "Shutdown", node_command: SimulationControllerCommand.Shutdown},
+        {label: "Get Cached Files", node_command: SimulationControllerCommand.GetCachedFiles},
+        {label: "Get File", node_command: SimulationControllerCommand.GetFile},
+        {label: "Get Text Files", node_command: SimulationControllerCommand.GetTextFiles},
+        {label: "Get Text File", node_command: SimulationControllerCommand.GetTextFile},
+        {label: "Get Media Files", node_command: SimulationControllerCommand.GetMediaFiles},
+        {label: "Get Media File", node_command: SimulationControllerCommand.GetMediaFile},
+        {label: "Add Text File", node_command: SimulationControllerCommand.AddTextFile},
+        {label: "Add Text File From Path", node_command: SimulationControllerCommand.AddTextFileFromPath},
+        {label: "Add Media File", node_command: SimulationControllerCommand.AddMediaFile},
+        {label: "Add Media File From Path", node_command: SimulationControllerCommand.AddMediaFileFromPath},
+        {label: "Remove Text File", node_command: SimulationControllerCommand.RemoveTextFile},
+        {label: "Remove Media File", node_command: SimulationControllerCommand.RemoveMediaFile},
+    ];
+
+    items: self.subtitle == "Chat-Client" ? chat_items : web_items;
+    node_type: self.subtitle == "Chat-Client" ? SimulationControllerType.ChatClient : SimulationControllerType.WebBrowser;
+}
+
+export component ServerButton inherits Button {
+    stripe_color: Palette.purple;
+
+    property <[Item]> chat_items: [
+        {label: "Add Sender", node_command: SimulationControllerCommand.AddSender},
+        {label: "Remove Sender", node_command: SimulationControllerCommand.RemoveSender},
+        {label: "Shutdown", node_command: SimulationControllerCommand.Shutdown},
+        {label: "Get Chats History", node_command: SimulationControllerCommand.GetChatsHistory},
+        {label: "Get Registered Clients", node_command: SimulationControllerCommand.GetRegisteredClients},
+        {label: "Send Message", node_command: SimulationControllerCommand.SendMessage},
+    ];
+
+    property <[Item]> web_items: [
+        {label: "Add Sender", node_command: SimulationControllerCommand.AddSender},
+        {label: "Remove Sender", node_command: SimulationControllerCommand.RemoveSender},
+        {label: "Shutdown", node_command: SimulationControllerCommand.Shutdown},
+        {label: "Get Cached Files", node_command: SimulationControllerCommand.GetCachedFiles},
+        {label: "Get File", node_command: SimulationControllerCommand.GetFile},
+        {label: "Get Text Files", node_command: SimulationControllerCommand.GetTextFiles},
+        {label: "Get Text File", node_command: SimulationControllerCommand.GetTextFile},
+        {label: "Get Media Files", node_command: SimulationControllerCommand.GetMediaFiles},
+        {label: "Get Media File", node_command: SimulationControllerCommand.GetMediaFile},
+        {label: "Add Text File", node_command: SimulationControllerCommand.AddTextFile},
+        {label: "Add Text File From Path", node_command: SimulationControllerCommand.AddTextFileFromPath},
+        {label: "Add Media File", node_command: SimulationControllerCommand.AddMediaFile},
+        {label: "Add Media File From Path", node_command: SimulationControllerCommand.AddMediaFileFromPath},
+        {label: "Remove Text File", node_command: SimulationControllerCommand.RemoveTextFile},
+        {label: "Remove Media File", node_command: SimulationControllerCommand.RemoveMediaFile},
+    ];
+
+    items: self.subtitle == "Chat-Server" ? chat_items : web_items;
+    node_type: self.subtitle == "Chat-Server" ? SimulationControllerType.ChatServer : SimulationControllerType.WebServer;
 }
