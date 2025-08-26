@@ -3,6 +3,7 @@ import "../assets/fonts/Satoshi-Regular.ttf";
 import { Palette } from "palette.slint";
 
 import { SimulationControllerCommand, SimulationControllerType, DroneButton, ClientButton, ServerButton } from "button.slint";
+import { Position, Edge, Circle, Line } from "graph.slint";
 
 import { AddSender, AddSenderMenu } from "menu/add_sender_menu.slint";
 import { RemoveSender, RemoveSenderMenu } from "menu/remove_sender_menu.slint";
@@ -44,6 +45,9 @@ export component MainWindow inherits Window {
     in property <image> graph_image: @image-url("../assets/images/placeholder.png");
 
     in property <[string]> logs;
+
+    in property <[Position]> nodes;
+    in property <[Edge]> edges;
 
     callback add_log(input: string);
     
@@ -512,7 +516,7 @@ export component MainWindow inherits Window {
                 vertical-stretch: 1; 
                 background: Palette.bg; 
                 clip: true;
-                
+
                 VerticalLayout {
                     width: parent.width;
                     height: parent.height;
@@ -524,6 +528,22 @@ export component MainWindow inherits Window {
                         width: 624px;
                         height: 624px;
                     }
+                }
+
+                for edge[i] in edges: Line {
+                    from_x: edge.from_x;
+                    from_y: edge.from_y;
+                    to_x: edge.to_x;
+                    to_y: edge.to_y;
+                    offset: edge.offset;
+                }
+
+                for node[i] in nodes: Circle {
+                    center_x: node.x;
+                    center_y: node.y;
+                    size: node.size;
+                    kind: node.kind;
+                    label: node.label;
                 }
             }
 

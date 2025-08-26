@@ -1,0 +1,134 @@
+import { Palette } from "palette.slint";
+
+export struct Position {
+    x: length,
+    y: length,
+    size: length,
+    kind: string,
+    label: string
+}
+
+export struct Edge {
+    from_x: float,
+    from_y: float,
+
+    to_x: float,
+    to_y: float,
+
+    offset: float,
+}
+
+export component Circle inherits Rectangle {
+    in-out property <length> center_x;
+    in-out property <length> center_y;
+    in-out property <length> size;
+    in-out property <string> kind;
+    in-out property <string> label;
+
+    x: center_x;
+    y: center_y;
+    width: size;
+    height: size;
+
+    Path {
+        stroke: Palette.bg_alt;
+        stroke-width: 2px;
+
+        fill: root.kind == "drone" ? Palette.orange : root.kind == "client" ? Palette.green : Palette.purple;
+
+        property <length> r: root.size / 2;
+
+        viewbox-x: 0;
+        viewbox-y: 0;
+        viewbox-width: root.size / 1px;
+        viewbox-height: root.size / 1px;
+
+        MoveTo { x: 0; y: -r / 1px; }
+        ArcTo { radius-x: r / 1px; radius-y: r / 1px; x: 0; y: r / 1px; large-arc: true; sweep: true; }
+        ArcTo { radius-x: r / 1px; radius-y: r / 1px; x: 0; y: -r / 1px; large-arc: true; sweep: true; }
+        Close {}
+    }
+
+    // Centered label
+    Text {
+        x: -root.size / 2;
+        y: -root.size / 2;
+
+        color: Palette.bg_highlight;
+
+        text: root.label;
+
+        font-weight: 600;
+        font-size: 18px;
+
+        horizontal-alignment: center;
+        vertical-alignment: center;
+
+        width: parent.width;
+        height: parent.height;
+    }
+}
+
+
+export component Line inherits Path {
+
+    in-out property <float> from_x;
+    in-out property <float> from_y;
+
+    in-out property <float> to_x;
+    in-out property <float> to_y;
+
+    in-out property <float> offset;
+
+    stroke: Palette.bg_highlight;
+    stroke-width: 2px;
+
+    viewbox-x: 0;
+    viewbox-y: 0;
+
+    viewbox-height: root.height / 1px;
+    viewbox-width: root.width / 1px;
+
+    MoveTo { 
+        x: from_x + offset; 
+        y: from_y + offset; 
+    }
+
+    LineTo { 
+        x: to_x + offset; 
+        y: to_y + offset; 
+    }
+} 
+
+// export component GraphView inherits Rectangle {
+//     width: 624px;
+//     height: 624px;
+
+//     background: Palette.bg;
+
+//     Circle {
+//         center_x: 0px;
+//         center_y: 0px;
+        
+//         size: 100px;
+
+//         label: "1";
+//     }
+
+//     Line {
+//         from_x: 0;
+//         from_y: 0;
+
+//         to_x: 300;
+//         to_y: 300;
+//     }
+
+//     Circle {
+//         center_x: 300px;
+//         center_y: 300px;
+        
+//         size: 100px;
+
+//         label: "2";
+//     }
+// }

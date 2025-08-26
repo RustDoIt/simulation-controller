@@ -1,6 +1,8 @@
 #![allow(warnings)]
 
 mod utils;
+mod graph_utils;
+
 //mod graph_utils;
 mod test;
 use chrono::{Datelike, Local, Timelike};
@@ -385,10 +387,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         main_window.as_weak(),
     );
 
-    //graph_utils::generate_graph(&simulation_controller.network_view);
-    // let svg_bytes = graph_utils::render_network_image(&simulation_controller.network_view, "svg");
-    // let img = Image::load_from_svg_data(&svg_bytes.unwrap())?;
-    // main_window.set_graph_image(img);
+    graph_utils::generate_graph(&main_window, &simulation_controller.network_view, &simulation_controller.clients, &simulation_controller.servers, &simulation_controller.drones);
     
     // Drones
     let mut drones = simulation_controller
