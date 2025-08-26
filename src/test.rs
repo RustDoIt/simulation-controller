@@ -1,9 +1,15 @@
+use std::{fs, path::Path};
+
+use common::{file_conversion, types::{ChatEvent, WebEvent}};
+
+use crate::{utils, SimulationController};
+
 
 
 
 #[cfg(test)]
 mod tests {
-    use common::types::{WebEvent, MediaFile};
+    use common::types::{WebEvent, MediaFile, ChatEvent};
     use std::fs;
     use std::path::Path;
     use uuid::Uuid;
@@ -55,4 +61,46 @@ mod tests {
     }
 
     
+    }
+
+    #[test]
+    fn test_simulation_chat_history_saving() {
+        // Setup
+        let mut simulation_controller = SimulationController::default();
+
+        let server_id = 1;
+        let mut history = std::collections::HashMap::new();
+        let messages = vec![
+            common::types::Message::new(server_id, 3, "Hello".to_string()),
+            common::types::Message::new(server_id, 3, "World".to_string()),
+        ];
+        let other_client = 2;
+        history.insert(other_client, messages.clone());
+
+
+        //IF USING UI
+        // Simulate receiving a ChatEvent::ChatHistory
+        // let event = ChatEvent::ChatHistory {
+        //     notification_from: server_id,
+        //     history: history.clone(),
+        // };
+        // Call the handler directly
+        //SimulationController::handle_node_event(Box::new(event), Weak::default());
+
+
+        //atomic test
+        utils::save_chat_history(&server_id, &history).expect("Failed to save chat history");
+
+        // Check that the chat history was saved in the correct file
+        let chat_file_path = format!("./chats_history_{}/clients_{}_{}.txt",server_id, server_id, other_client);
+        println!("Checking saved chat history at: {}", chat_file_path);
+        let path = Path::new(&chat_file_path);
+        println!("Reading saved chat history at: {}", path.display());
+        assert!(path.exists(), "Chat history file was not saved by SimulationController");
+        let saved_data = fs::read_to_string(&path).expect("Failed to read saved chat history file");
+        let expected = messages.iter().map(|m| format!("From {} to {}: {}\n", m.from, m.to, m.text)).collect::<String>();
+        assert_eq!(saved_data, expected, "Saved chat history contents do not match");
+
+        // Clean up
+        let _ = fs::remove_file(&path);
     }
