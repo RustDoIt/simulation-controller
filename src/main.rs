@@ -6,7 +6,7 @@ mod test;
 use chrono::{Datelike, Local, Timelike};
 
 use common::file_conversion;
-use common::network::Network;
+use common::network::{Network, Node};
 use common::types::{ChatCommand, ChatEvent, Command, Event, MediaReference, Message, NodeCommand, NodeEvent, NodeType, TextFile, WebCommand, WebEvent};
 
 use crossbeam::channel::{Receiver, Sender};
@@ -63,13 +63,14 @@ impl SimulationController {
         let is_running = self.is_running.clone();
 
         self.network_initializer = Some(initializer);
+        let nodes = self.get_nodes_with_type();
         self.listener = Some(std::thread::spawn(move || {
-            
             Self::listen_to_events(
                 node_event_receiver,
                 drone_event_receiver,
                 is_running,
                 ui_handle,
+                nodes
             )
         }));
     }
@@ -99,13 +100,14 @@ impl SimulationController {
         drone_event_receiver: Receiver<DroneEvent>,
         is_running: Arc<RwLock<bool>>,
         ui_handle: Weak<MainWindow>,
+        nodes: (Vec<(NodeId, String)>, Vec<(NodeId, String)>),
     ) {
         while *is_running.read().unwrap() {
             select! {
                 recv(nodes_event_receiver) -> msg => {
                     match msg {
                         Ok(event) => {
-                            Self::handle_node_event(event, ui_handle.clone());
+                            Self::handle_node_event(event, ui_handle.clone(), nodes.clone());
                         }
                         Err(e) => {
                             break;
@@ -128,8 +130,7 @@ impl SimulationController {
         std::process::exit(0);
     }
 
-    fn handle_node_event(event: Box<dyn Event>, ui_handle: Weak<MainWindow>) {
-
+    fn handle_node_event(event: Box<dyn Event>, ui_handle: Weak<MainWindow>, nodes: (Vec<(NodeId, String)>, Vec<(NodeId, String)>)) {
         slint::invoke_from_event_loop(move || {
             if let Some(main_window) = ui_handle.upgrade() {
                 let event = event.into_any();
@@ -174,7 +175,6 @@ impl SimulationController {
                             notification_from,
                             file,
                         } => {
-
                             utils::log(&format!("NOTIFICATION FROM: {notification_from}, MEDIA FILE RECEIVED: {}", file.id.to_string()));
                             file_conversion::save_media_file(notification_from, file);
                         },
@@ -269,7 +269,10 @@ impl SimulationController {
                         ChatEvent::RegisteredClients {
                             notification_from,
                             list,
-                        } => todo!(),
+                        } => {
+                            utils::handle_registered_clients(notification_from, list, ui_handle, nodes.clone());
+                            // TODO to be tested
+                        },
                         ChatEvent::MessageSent {
                             notification_from,
                             to,
