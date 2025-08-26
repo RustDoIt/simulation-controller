@@ -5,6 +5,7 @@ mod utils;
 
 use chrono::{Datelike, Local, Timelike};
 
+use common::file_conversion::save_media_file;
 use common::network::Network;
 use common::types::{ChatCommand, ChatEvent, Command, Event, MediaReference, Message, NodeCommand, NodeEvent, NodeType, TextFile, WebCommand, WebEvent};
 
@@ -173,8 +174,7 @@ impl SimulationController {
                             file,
                         } => {
                             utils::log(&format!("NOTIFICATION FROM: {notification_from}, MEDIA FILE RECEIVED: {}", file.id.to_string()));
-                            todo!("Save file")
-
+                            save_media_file(notification_from, file);
                         },
                         WebEvent::FilesListQueried {
                             notification_from,
