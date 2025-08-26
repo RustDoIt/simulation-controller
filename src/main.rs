@@ -2,7 +2,7 @@
 
 mod utils;
 //mod graph_utils;
-
+mod test;
 use chrono::{Datelike, Local, Timelike};
 
 use common::file_conversion;
@@ -129,6 +129,7 @@ impl SimulationController {
     }
 
     fn handle_node_event(event: Box<dyn Event>, ui_handle: Weak<MainWindow>) {
+
         slint::invoke_from_event_loop(move || {
             if let Some(main_window) = ui_handle.upgrade() {
                 let event = event.into_any();
@@ -173,6 +174,7 @@ impl SimulationController {
                             notification_from,
                             file,
                         } => {
+                            
                             utils::log(&format!("NOTIFICATION FROM: {notification_from}, MEDIA FILE RECEIVED: {}", file.id.to_string()));
                             file_conversion::save_media_file(notification_from, file);
                         },
