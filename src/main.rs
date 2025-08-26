@@ -1,6 +1,7 @@
 #![allow(warnings)]
 
 mod utils;
+//mod graph_utils;
 
 use chrono::{Datelike, Local, Timelike};
 
@@ -22,7 +23,7 @@ use network_initializer::network_initializer::{NetworkInitializer, Running, Unin
 use wg_internal::controller::{DroneCommand, DroneEvent};
 use wg_internal::network::NodeId;
 
-use slint::{Model, ModelRc, SharedString, VecModel, Weak, SharedVector, ComponentHandle};
+use slint::{ComponentHandle, Image, Model, ModelRc, SharedString, SharedVector, VecModel, Weak, PhysicalSize};
 slint::include_modules!();
 
 
@@ -367,6 +368,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         main_window.as_weak(),
     );
 
+    //graph_utils::generate_graph(&simulation_controller.network_view);
+    // let svg_bytes = graph_utils::render_network_image(&simulation_controller.network_view, "svg");
+    // let img = Image::load_from_svg_data(&svg_bytes.unwrap())?;
+    // main_window.set_graph_image(img);
+    
     // Drones
     let mut drones = simulation_controller
         .get_drones_pdr();
@@ -500,6 +506,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
 
+            //TODO aggiungere collegamento grafo
         }
     });
     
@@ -545,6 +552,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     sender1.send(Box::new(NodeCommand::RemoveSender(args_node_id.clone())));
                 }
             }
+
+            //TODO rimuovere collegamento grafo
         }
     });
 
@@ -581,6 +590,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 _ => {}
             }
+
+            //TODO rimuovere collegamento grafo
+            //TODO rimuovere dalla lista
         }
     });
 
@@ -606,6 +618,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 _ => {}
             }
+
+            //TODO rimuovere collegamento grafo
+            //TODO rimuovere dalla lista
         }
     });
 
@@ -633,6 +648,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 _ => {}
             }
+
+            //TODO cambiare testo menu
         }
     }); 
 
@@ -668,6 +685,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 _ => {}
             }
+
+            //TODO creare file di testo
         }
     });
 
@@ -703,6 +722,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 _ => {}
             }
+
+            //TODO label grafo
         }
     });
 
@@ -781,6 +802,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 _ => {}
             }
+
+            //TODO label grafo
+
         }
     });
 
@@ -816,6 +840,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 _ => {}
             }
+
+            //TODO salvare cached files
         }
     });
 
@@ -854,6 +880,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 _ => {}
             }
+
+            //TODO salvare file
         }
     });
 
@@ -889,6 +917,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 _ => {}
             }
+
+            //TODO salvare text files
         }
     });
 
@@ -927,6 +957,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 _ => {}
             }
+
+            //TODO salvare text file
         }
     });
 
@@ -962,6 +994,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 _ => {}
             }
+
+            //TODO salvare media files
         }
     });
 
@@ -1001,6 +1035,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 _ => {}
             }
+
+            //TODO salvare media file
         }
     });
 
@@ -1274,6 +1310,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 _ => {}
             }
+
+            //TODO salvare file
         }
     });
 

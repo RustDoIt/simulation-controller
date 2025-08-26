@@ -4536,6 +4536,7 @@ dependencies = [
  "network-initializer",
  "once_cell",
  "regex",
+ "serde_json",
  "slint",
  "slint-build",
  "uuid",

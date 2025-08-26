@@ -228,12 +228,12 @@ export component ClientButton inherits Button {
         {label: "Get Text File", node_command: SimulationControllerCommand.GetTextFile},
         {label: "Get Media Files", node_command: SimulationControllerCommand.GetMediaFiles},
         {label: "Get Media File", node_command: SimulationControllerCommand.GetMediaFile},
-        {label: "Add Text File", node_command: SimulationControllerCommand.AddTextFile},
-        {label: "Add Text File From Path", node_command: SimulationControllerCommand.AddTextFileFromPath},
-        {label: "Add Media File", node_command: SimulationControllerCommand.AddMediaFile},
-        {label: "Add Media File From Path", node_command: SimulationControllerCommand.AddMediaFileFromPath},
-        {label: "Remove Text File", node_command: SimulationControllerCommand.RemoveTextFile},
-        {label: "Remove Media File", node_command: SimulationControllerCommand.RemoveMediaFile},
+        // {label: "Add Text File", node_command: SimulationControllerCommand.AddTextFile},
+        // {label: "Add Text File From Path", node_command: SimulationControllerCommand.AddTextFileFromPath},
+        // {label: "Add Media File", node_command: SimulationControllerCommand.AddMediaFile},
+        // {label: "Add Media File From Path", node_command: SimulationControllerCommand.AddMediaFileFromPath},
+        // {label: "Remove Text File", node_command: SimulationControllerCommand.RemoveTextFile},
+        // {label: "Remove Media File", node_command: SimulationControllerCommand.RemoveMediaFile},
         {label: "Query Text File List", node_command: SimulationControllerCommand.QueryTextFilesList},
         {label: "Get Text Files List", node_command: SimulationControllerCommand.GetTextFilesList},
     ];
@@ -249,18 +249,18 @@ export component ServerButton inherits Button {
         {label: "Add Sender", node_command: SimulationControllerCommand.AddSender},
         {label: "Remove Sender", node_command: SimulationControllerCommand.RemoveSender},
         {label: "Shutdown", node_command: SimulationControllerCommand.Shutdown},
-        {label: "Get Chats History", node_command: SimulationControllerCommand.GetChatsHistory},
+        // {label: "Get Chats History", node_command: SimulationControllerCommand.GetChatsHistory},
         {label: "Get Registered Clients", node_command: SimulationControllerCommand.GetRegisteredClients},
-        {label: "Send Message", node_command: SimulationControllerCommand.SendMessage},
-        {label: "Register To Server", node_command: SimulationControllerCommand.RegisterToServer},
+        // {label: "Send Message", node_command: SimulationControllerCommand.SendMessage},
+        // {label: "Register To Server", node_command: SimulationControllerCommand.RegisterToServer},
     ];
 
     property <[Item]> web_items: [
         {label: "Add Sender", node_command: SimulationControllerCommand.AddSender},
         {label: "Remove Sender", node_command: SimulationControllerCommand.RemoveSender},
         {label: "Shutdown", node_command: SimulationControllerCommand.Shutdown},
-        {label: "Get Cached Files", node_command: SimulationControllerCommand.GetCachedFiles},
-        {label: "Get File", node_command: SimulationControllerCommand.GetFile},
+        // {label: "Get Cached Files", node_command: SimulationControllerCommand.GetCachedFiles},
+        // {label: "Get File", node_command: SimulationControllerCommand.GetFile},
         {label: "Get Text Files", node_command: SimulationControllerCommand.GetTextFiles},
         {label: "Get Text File", node_command: SimulationControllerCommand.GetTextFile},
         {label: "Get Media Files", node_command: SimulationControllerCommand.GetMediaFiles},
@@ -271,8 +271,8 @@ export component ServerButton inherits Button {
         {label: "Add Media File From Path", node_command: SimulationControllerCommand.AddMediaFileFromPath},
         {label: "Remove Text File", node_command: SimulationControllerCommand.RemoveTextFile},
         {label: "Remove Media File", node_command: SimulationControllerCommand.RemoveMediaFile},
-        {label: "Query Text File List", node_command: SimulationControllerCommand.QueryTextFilesList},
-        {label: "Get Text Files List", node_command: SimulationControllerCommand.GetTextFilesList},
+        // {label: "Query Text File List", node_command: SimulationControllerCommand.QueryTextFilesList},
+        // {label: "Get Text Files List", node_command: SimulationControllerCommand.GetTextFilesList},
     ];
 
     items: self.subtitle == "Chat-Server" ? chat_items : web_items;
