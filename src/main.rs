@@ -280,7 +280,7 @@ impl SimulationController {
                         ChatEvent::MessageReceived {
                             notification_from,
                             msg,
-                        } => utils::log(&format!("NOTIFICATION FROM: {notification_from}, RECEIVED MESSAGE {msg}")),
+                        } => utils::log(&format!("NOTIFICATION FROM: {notification_from}, RECEIVED MESSAGE {:?}", msg)),
                         ChatEvent::ClientRegistered {
                             client,
                             server
