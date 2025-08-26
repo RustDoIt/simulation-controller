@@ -139,14 +139,14 @@ impl SimulationController {
                             files,
                         } => {
                             utils::log(&format!("NOTIFICATION FROM: {notification_from}, CACHED FILES RECEIVED: {} files", files.len()));
-                            todo!("Save files")
+                            file_conversion::save_files(notification_from, files);
                         },
                         WebEvent::File {
                             notification_from,
                             file,
                         } => {
                             utils::log(&format!("NOTIFICATION FROM: {notification_from}, FILE RECEIVED: {}", file.id.to_string()));
-                            todo!("Save file")
+                            file_conversion::save_file(notification_from, file);
                         },
                         WebEvent::TextFiles {
                             notification_from,
