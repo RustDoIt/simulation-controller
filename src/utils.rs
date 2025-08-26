@@ -4,11 +4,13 @@ use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
+use std::sync::{Arc, RwLock};
 use once_cell::sync::OnceCell;
-use slint::{Image, SharedString, VecModel};
+use slint::{Image, SharedString, VecModel, Weak};
 use wg_internal::network::NodeId;
 use common::types::Message;
-use crate::{Drone, Client, Server};
+use crate::{Client, Drone, Server, SimulationController};
+use crate::{ MainWindow };
 
 static LOGGER: OnceCell<Box<dyn Fn(SharedString) + Send + Sync + 'static>> = OnceCell::new();
 
@@ -49,6 +51,20 @@ pub fn save_chat_history(notification_from: &u8, history: &HashMap<NodeId, Vec<M
         }
     }
     Ok(())
+}
+
+pub fn handle_registered_clients(notification_from: &u8, list: &Vec<u8>, main_window: Weak<MainWindow>, nodes: (Vec<(NodeId, String)>, Vec<(NodeId, String)>)) -> () {
+    if let Some(mw) = main_window.upgrade() {
+        let (clients_nodes, servers_nodes) = nodes;
+        if clients_nodes.iter().any(|(node_id, _)| node_id == notification_from) {
+            let clients = Rc::new(VecModel::from(clients_nodes.iter().map(|(node_id, node_type)| Client { title: format!("Client {}. Can reach:  {:?}", node_id, list).into(), subtitle: node_type.into(), id: node_id.to_string().into() }).collect::<Vec<_>>()));
+            mw.set_clients(clients.into());
+        }
+        if servers_nodes.iter().any(|(node_id, _)| node_id == notification_from) {
+            let servers = Rc::new(VecModel::from(servers_nodes.iter().map(|(node_id, node_type)| Server { title: format!("Server {}. Subscribed: {:?}", node_id, list).into(), subtitle: node_type.into(), id: node_id.to_string().into() }).collect::<Vec<_>>()));
+            mw.set_servers(servers.into());
+        }
+    }
 }
 
 pub fn validate_node_id(input: &str) -> bool {
