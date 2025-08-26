@@ -12,6 +12,9 @@ common = { path = "../common" }
 network-initializer = { path = "../network-initializer" }
 wg_internal = { git = "https://github.com/WGL-2024/WGL_repo_2024.git", features = ["debug"] }
 ctrlc = "3.4.7"
+uuid = { version = "1.18.0", features = [ "serde", "v4"] }
+regex = "1.11.2"
+serde_json = { version = "1.0.137" }
 
 [build-dependencies]
 slint-build = "1.3"

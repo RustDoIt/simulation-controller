@@ -1,24 +1,29 @@
 #![allow(warnings)]
 
 mod utils;
+//mod graph_utils;
 
 use chrono::{Datelike, Local, Timelike};
 
 use common::network::Network;
-use common::types::{ChatEvent, Command, Event, NodeEvent, WebEvent, NodeType};
+use common::types::{ChatCommand, ChatEvent, Command, Event, MediaReference, Message, NodeCommand, NodeEvent, NodeType, TextFile, WebCommand, WebEvent};
 
 use crossbeam::channel::{Receiver, Sender};
 use crossbeam::select;
 
 use std::collections::HashMap;
 use std::rc::Rc;
+use std::str::FromStr;
 use std::sync::{Arc, RwLock};
+
+use regex::Regex;
+use uuid::Uuid;
 
 use network_initializer::network_initializer::{NetworkInitializer, Running, Uninitialized};
 use wg_internal::controller::{DroneCommand, DroneEvent};
 use wg_internal::network::NodeId;
 
-use slint::{Model, ModelRc, SharedString, VecModel, Weak, SharedVector, ComponentHandle};
+use slint::{ComponentHandle, Image, Model, ModelRc, SharedString, SharedVector, VecModel, Weak, PhysicalSize};
 slint::include_modules!();
 
 
@@ -242,6 +247,12 @@ impl SimulationController {
                         } => {
                             utils::log(&format!("NOTIFICATION FROM: {notification_from}, FILE SERVED: {file}"));
                         },
+                        WebEvent::FilesLists { 
+                            notification_from, 
+                            files_map 
+                        } => {
+                            utils::log(&format!("NOTIFICATION FROM: {notification_from}, FILE LISTS"));
+                        }
                     
                     }
                 } else if let Some(event) = event.downcast_ref::<ChatEvent>() {
@@ -357,6 +368,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         main_window.as_weak(),
     );
 
+    //graph_utils::generate_graph(&simulation_controller.network_view);
+    // let svg_bytes = graph_utils::render_network_image(&simulation_controller.network_view, "svg");
+    // let img = Image::load_from_svg_data(&svg_bytes.unwrap())?;
+    // main_window.set_graph_image(img);
+    
     // Drones
     let mut drones = simulation_controller
         .get_drones_pdr();
@@ -413,27 +429,84 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }));
     }
     
+    let simulation_controller = Arc::new(simulation_controller);
+    let sc_add_sender = Arc::clone(&simulation_controller);
+    let sc_remove_sender = Arc::clone(&simulation_controller);
+    let sc_shutdown = Arc::clone(&simulation_controller);
+    let sc_crash = Arc::clone(&simulation_controller);
+    let sc_set_packet_drop_rate = Arc::clone(&simulation_controller);
+    let sc_get_chats_history = Arc::clone(&simulation_controller);
+    let sc_get_registered_clients = Arc::clone(&simulation_controller);
+    let sc_send_message = Arc::clone(&simulation_controller);
+    let sc_register_to_server = Arc::clone(&simulation_controller);
+    let sc_get_cached_files = Arc::clone(&simulation_controller);
+    let sc_get_file = Arc::clone(&simulation_controller);
+    let sc_get_text_files = Arc::clone(&simulation_controller);
+    let sc_get_text_file = Arc::clone(&simulation_controller);
+    let sc_get_media_files = Arc::clone(&simulation_controller);
+    let sc_get_media_file = Arc::clone(&simulation_controller);
+    let sc_add_text_file_from_path = Arc::clone(&simulation_controller);
+    let sc_add_media_file_from_path = Arc::clone(&simulation_controller);
+    let sc_remove_text_file = Arc::clone(&simulation_controller);
+    let sc_remove_media_file = Arc::clone(&simulation_controller);
+    let sc_query_text_files_list = Arc::clone(&simulation_controller);
+    let sc_get_text_files_list = Arc::clone(&simulation_controller);
+    let sc_add_text_file = Arc::clone(&simulation_controller);
+
     main_window.on_add_sender({
         move |node_command: SimulationControllerCommand, 
             node_type: SimulationControllerType, 
             node_id: SharedString,
             args: AddSender| {
+                
             println!("add_sender {:?}", node_id);
+
+            let node_id = node_id.parse::<NodeId>().unwrap();
+            let args_node_id = args.node_id.parse::<NodeId>().unwrap();
+
+            let sender2 = sc_add_sender
+                .network_initializer
+                .as_ref()
+                .unwrap()
+                .get_comms_channels()
+                .get(&args_node_id)
+                .unwrap()
+                .get_sender()
+                .clone();
 
             match node_type {
                 SimulationControllerType::Drone => {
+                    let sender1 = &sc_add_sender
+                        .drones
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
 
-                    let (_, sender1) = simulation_controller.drones.get_mut(&node_id.parse::<NodeId>().unwrap()).unwrap();
-                    let (_, sender2) = simulation_controller.drones.get_mut(&node_id.parse::<NodeId>().unwrap()).unwrap();
-                    
-                    sender1.send(DroneCommand::AddSender(args.node_id.clone(), sender2.clone()));
-                    
+                    sender1.send(DroneCommand::AddSender(args_node_id.clone(), sender2.clone()));
                 }
-                SimulationControllerType::ChatClient => {}
-                SimulationControllerType::WebBrowser => {}
-                SimulationControllerType::ChatServer => {}
-                SimulationControllerType::WebServer => {}
+
+                SimulationControllerType::ChatClient | SimulationControllerType::WebBrowser => {
+                    let sender1 = &sc_add_sender
+                        .clients
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(NodeCommand::AddSender(args_node_id.clone(), sender2.clone())));
+                }
+
+                SimulationControllerType::ChatServer | SimulationControllerType::WebServer => {
+                    let sender1 = &sc_add_sender
+                        .servers
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(NodeCommand::AddSender(args_node_id.clone(), sender2.clone())));
+                }
             }
+
+            //TODO aggiungere collegamento grafo
         }
     });
     
@@ -442,7 +515,45 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             node_type: SimulationControllerType,
             node_id: SharedString,
             args: RemoveSender| {
+
             println!("remove_sender {:?}", node_id);
+
+            let node_id = node_id.parse::<NodeId>().unwrap();
+            let args_node_id = args.node_id.parse::<NodeId>().unwrap();
+
+            match node_type {
+                SimulationControllerType::Drone => {
+                    let sender1 = &sc_remove_sender
+                        .drones
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(DroneCommand::RemoveSender(args_node_id));
+                }
+
+                SimulationControllerType::ChatClient | SimulationControllerType::WebBrowser => {
+                    let sender1 = &sc_remove_sender
+                        .clients
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(NodeCommand::RemoveSender(args_node_id.clone())));
+                }
+
+                SimulationControllerType::ChatServer | SimulationControllerType::WebServer => {
+                    let sender1 = &sc_remove_sender
+                        .servers
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(NodeCommand::RemoveSender(args_node_id.clone())));
+                }
+            }
+
+            //TODO rimuovere collegamento grafo
         }
     });
 
@@ -450,15 +561,132 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         move |node_command: SimulationControllerCommand,
             node_type: SimulationControllerType,
             node_id: SharedString| {
+
             println!("shutdown {:?}", node_id);
+
+            let node_id = node_id.parse::<NodeId>().unwrap();
+
+            match node_type {
+
+                SimulationControllerType::ChatClient | SimulationControllerType::WebBrowser => {
+                    let sender1 = &sc_shutdown
+                        .clients
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(NodeCommand::Shutdown));
+                }
+
+                SimulationControllerType::ChatServer | SimulationControllerType::WebServer => {
+                    let sender1 = &sc_shutdown
+                        .servers
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(NodeCommand::Shutdown));
+                }
+
+                _ => {}
+            }
+
+            //TODO rimuovere collegamento grafo
+            //TODO rimuovere dalla lista
         }
     });
+
+    main_window.on_crash({
+        move |node_command: SimulationControllerCommand,
+            node_type: SimulationControllerType,
+            node_id: SharedString| {
+
+            println!("crash {:?}", node_id);
+
+            let node_id = node_id.parse::<NodeId>().unwrap();
+
+            match node_type {
+                SimulationControllerType::Drone => {
+                    let sender1 = &sc_crash
+                        .drones
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(DroneCommand::Crash);
+                }
+
+                _ => {}
+            }
+
+            //TODO rimuovere collegamento grafo
+            //TODO rimuovere dalla lista
+        }
+    });
+
+    main_window.on_set_packet_drop_rate({
+        move |node_command: SimulationControllerCommand,
+            node_type: SimulationControllerType,
+            node_id: SharedString,
+            args: SetPacketDropRate| {
+
+            println!("set_packet_drop_rate {:?}", node_id);
+
+            let node_id = node_id.parse::<NodeId>().unwrap();
+            let args_pdr = args.pdr.parse::<f32>().unwrap();
+
+            match node_type {
+                SimulationControllerType::Drone => {
+                    let sender1 = &sc_set_packet_drop_rate
+                        .drones
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(DroneCommand::SetPacketDropRate(args_pdr.clone()));
+                }
+
+                _ => {}
+            }
+
+            //TODO cambiare testo menu
+        }
+    }); 
 
     main_window.on_get_chats_history({
         move |node_command: SimulationControllerCommand,
             node_type: SimulationControllerType,
             node_id: SharedString| {
+
             println!("get_chats_history {:?}", node_id);
+            
+            let node_id = node_id.parse::<NodeId>().unwrap();
+
+            match node_type {
+                SimulationControllerType::ChatClient => {
+                    let sender1 = &sc_get_chats_history
+                        .clients
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(ChatCommand::GetChatsHistory));
+                }
+
+                SimulationControllerType::ChatServer => {
+                    let sender1 = &sc_get_chats_history
+                        .servers
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(ChatCommand::GetChatsHistory));
+                }
+
+                _ => {}
+            }
+
+            //TODO creare file di testo
         }
     });
 
@@ -466,7 +694,36 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         move |node_command: SimulationControllerCommand,
             node_type: SimulationControllerType,
             node_id: SharedString| {
+
             println!("get_registered_clients {:?}", node_id);
+
+            let node_id = node_id.parse::<NodeId>().unwrap();
+
+            match node_type {
+                SimulationControllerType::ChatClient => {
+                    let sender1 = &sc_get_registered_clients
+                        .clients
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(ChatCommand::GetRegisteredClients));
+                }
+
+                SimulationControllerType::ChatServer => {
+                    let sender1 = &sc_get_registered_clients
+                        .servers
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(ChatCommand::GetRegisteredClients));
+                }
+
+                _ => {}
+            }
+
+            //TODO label grafo
         }
     });
 
@@ -475,7 +732,79 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             node_type: SimulationControllerType,
             node_id: SharedString,
             args: SendMessage| {
+
             println!("send_message {:?}", node_id);
+
+            let node_id = node_id.parse::<NodeId>().unwrap();
+            
+            let from = args.from.parse::<NodeId>().unwrap();
+            let to = args.to.parse::<NodeId>().unwrap();
+            let text = args.text.parse::<String>().unwrap();
+
+            match node_type {
+                SimulationControllerType::ChatClient => {
+                    let sender1 = &sc_send_message
+                        .clients
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(ChatCommand::SendMessage(Message {from: from, to: to, text: text})));
+                }
+
+                SimulationControllerType::ChatServer => {
+                    let sender1 = &sc_send_message
+                        .servers
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(ChatCommand::SendMessage(Message {from: from, to: to, text: text})));
+                }
+
+                _ => {}
+            }
+        }
+    });
+
+    main_window.on_register_to_server({
+        move |node_command: SimulationControllerCommand,
+            node_type: SimulationControllerType,
+            node_id: SharedString,
+            args: RegisterToServer| {
+
+            println!("register_to_server {:?}", node_id);
+
+            let node_id = node_id.parse::<NodeId>().unwrap();
+            
+            let args_node_id = args.node_id.parse::<NodeId>().unwrap();
+
+            match node_type {
+                SimulationControllerType::ChatClient => {
+                    let sender1 = &sc_register_to_server
+                        .clients
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(ChatCommand::RegisterToServer(args_node_id)));
+                }
+
+                SimulationControllerType::ChatServer => {
+                    let sender1 = &sc_register_to_server
+                        .servers
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(ChatCommand::RegisterToServer(args_node_id)));
+                }
+
+                _ => {}
+            }
+
+            //TODO label grafo
+
         }
     });
 
@@ -483,7 +812,36 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         move |node_command: SimulationControllerCommand,
             node_type: SimulationControllerType,
             node_id: SharedString| {
+
             println!("get_cached_files {:?}", node_id);
+
+            let node_id = node_id.parse::<NodeId>().unwrap();
+
+            match node_type {
+                SimulationControllerType::WebBrowser => {
+                    let sender1 = &sc_get_cached_files
+                        .clients
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(WebCommand::GetCachedFiles));
+                }
+
+                SimulationControllerType::WebServer => {
+                    let sender1 = &sc_get_cached_files
+                        .servers
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(WebCommand::GetCachedFiles));
+                }
+
+                _ => {}
+            }
+
+            //TODO salvare cached files
         }
     });
 
@@ -492,7 +850,38 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             node_type: SimulationControllerType,
             node_id: SharedString,
             args: GetFile| {
+
             println!("get_file {:?}", node_id);
+
+            let node_id = node_id.parse::<NodeId>().unwrap();
+            
+            let uuid = args.uuid.parse::<Uuid>().unwrap();
+
+            match node_type {
+                SimulationControllerType::WebBrowser => {
+                    let sender1 = &sc_get_file
+                        .clients
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(WebCommand::GetFile(uuid)));
+                }
+
+                SimulationControllerType::WebServer => {
+                    let sender1 = &sc_get_file
+                        .servers
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(WebCommand::GetFile(uuid)));
+                }
+
+                _ => {}
+            }
+
+            //TODO salvare file
         }
     });
 
@@ -500,7 +889,76 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         move |node_command: SimulationControllerCommand,
             node_type: SimulationControllerType,
             node_id: SharedString| {
+
             println!("get_text_files {:?}", node_id);
+
+            let node_id = node_id.parse::<NodeId>().unwrap();
+            
+            match node_type {
+                SimulationControllerType::WebBrowser => {
+                    let sender1 = &sc_get_text_files
+                        .clients
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(WebCommand::GetTextFiles));
+                }
+
+                SimulationControllerType::WebServer => {
+                    let sender1 = &sc_get_text_files
+                        .servers
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(WebCommand::GetTextFiles));
+                }
+
+                _ => {}
+            }
+
+            //TODO salvare text files
+        }
+    });
+
+    main_window.on_get_text_file({
+        move |node_command: SimulationControllerCommand,
+            node_type: SimulationControllerType,
+            node_id: SharedString,
+            args: GetTextFile| {
+
+            println!("get_text_file {:?}", node_id);
+
+            let node_id = node_id.parse::<NodeId>().unwrap();
+            
+            let uuid = args.uuid.parse::<Uuid>().unwrap();
+
+            match node_type {
+                SimulationControllerType::WebBrowser => {
+                    let sender1 = &sc_get_text_file
+                        .clients
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(WebCommand::GetTextFile(uuid)));
+                }
+
+                SimulationControllerType::WebServer => {
+                    let sender1 = &sc_get_text_file
+                        .servers
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(WebCommand::GetTextFile(uuid)));
+                }
+
+                _ => {}
+            }
+
+            //TODO salvare text file
         }
     });
 
@@ -508,7 +966,36 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         move |node_command: SimulationControllerCommand,
             node_type: SimulationControllerType,
             node_id: SharedString| {
+
             println!("get_media_files {:?}", node_id);
+
+            let node_id = node_id.parse::<NodeId>().unwrap();
+            
+            match node_type {
+                SimulationControllerType::WebBrowser => {
+                    let sender1 = &sc_get_media_files
+                        .clients
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(WebCommand::GetMediaFiles));
+                }
+
+                SimulationControllerType::WebServer => {
+                    let sender1 = &sc_get_media_files
+                        .servers
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(WebCommand::GetMediaFiles));
+                }
+
+                _ => {}
+            }
+
+            //TODO salvare media files
         }
     });
 
@@ -517,7 +1004,90 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             node_type: SimulationControllerType,
             node_id: SharedString,
             args: GetMediaFile| {
+
             println!("get_media_file {:?}", node_id);
+            
+            let node_id = node_id.parse::<NodeId>().unwrap();
+            
+            let media_id = args.media_id.parse::<Uuid>().unwrap();
+            let location = args.location.parse::<NodeId>().unwrap();
+
+            match node_type {
+                SimulationControllerType::WebBrowser => {
+                    let sender1 = &sc_get_media_file
+                        .clients
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(WebCommand::GetMediaFile { media_id: media_id, location: location }));
+                }
+
+                SimulationControllerType::WebServer => {
+                    let sender1 = &sc_get_media_file
+                        .servers
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(WebCommand::GetMediaFile { media_id: media_id, location: location }));
+                }
+
+                _ => {}
+            }
+
+            //TODO salvare media file
+        }
+    });
+
+    main_window.on_add_text_file({
+        move |node_command: SimulationControllerCommand,
+            node_type: SimulationControllerType,
+            node_id: SharedString,
+            args: AddTextFile| {
+
+            println!("add_text_file {:?}", node_id);
+
+            let node_id = node_id.parse::<NodeId>().unwrap();
+            
+            let re = Regex::new(r"\((\d+),([^)]+)\)").unwrap();
+            
+            let title = args.title.parse::<String>().unwrap();
+            let content = args.content.parse::<String>().unwrap();
+            let media_refs: Vec<MediaReference> = re
+                .captures_iter(&args.media_refs.parse::<String>().unwrap())
+                .map(|cap| {
+                    let location: NodeId = cap[1].parse().unwrap();
+                    let id = Uuid::parse_str(&cap[2]).unwrap();
+
+                    MediaReference { location, id }
+                })
+                .collect();
+
+
+            match node_type {
+                SimulationControllerType::WebBrowser => {
+                    let sender1 = &sc_add_text_file
+                        .clients
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(WebCommand::AddTextFile(TextFile::new(title, content, media_refs))));
+                }
+
+                SimulationControllerType::WebServer => {
+                    let sender1 = &sc_add_text_file
+                        .servers
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(WebCommand::AddTextFile(TextFile::new(title, content, media_refs))));
+                }
+
+                _ => {}
+            }
         }
     });
 
@@ -526,7 +1096,36 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             node_type: SimulationControllerType,
             node_id: SharedString,
             args: AddTextFileFromPath| {
+
             println!("add_text_file_from_path {:?}", node_id);
+
+            let node_id = node_id.parse::<NodeId>().unwrap();
+            
+            let file_path = args.file_path.parse::<String>().unwrap();
+
+            match node_type {
+                SimulationControllerType::WebBrowser => {
+                    let sender1 = &sc_add_text_file_from_path
+                        .clients
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(WebCommand::AddTextFileFromPath(file_path)));
+                }
+
+                SimulationControllerType::WebServer => {
+                    let sender1 = &sc_add_text_file_from_path
+                        .servers
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(WebCommand::AddTextFileFromPath(file_path)));
+                }
+
+                _ => {}
+            }
         }
     });
 
@@ -535,7 +1134,36 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             node_type: SimulationControllerType,
             node_id: SharedString,
             args: AddMediaFileFromPath| {
+
             println!("add_media_file_from_path {:?}", node_id);
+
+            let node_id = node_id.parse::<NodeId>().unwrap();
+            
+            let file_path = args.file_path.parse::<String>().unwrap();
+
+            match node_type {
+                SimulationControllerType::WebBrowser => {
+                    let sender1 = &sc_add_media_file_from_path
+                        .clients
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(WebCommand::AddMediaFileFromPath(file_path)));
+                }
+
+                SimulationControllerType::WebServer => {
+                    let sender1 = &sc_add_media_file_from_path
+                        .servers
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(WebCommand::AddMediaFileFromPath(file_path)));
+                }
+
+                _ => {}
+            }
         }
     });
 
@@ -544,7 +1172,36 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             node_type: SimulationControllerType,
             node_id: SharedString,
             args: RemoveTextFile| {
+
             println!("remove_text_file {:?}", node_id);
+
+            let node_id = node_id.parse::<NodeId>().unwrap();
+            
+            let uuid = args.uuid.parse::<Uuid>().unwrap();
+
+            match node_type {
+                SimulationControllerType::WebBrowser => {
+                    let sender1 = &sc_remove_text_file
+                        .clients
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(WebCommand::RemoveTextFile(uuid)));
+                }
+
+                SimulationControllerType::WebServer => {
+                    let sender1 = &sc_remove_text_file
+                        .servers
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(WebCommand::RemoveTextFile(uuid)));
+                }
+
+                _ => {}
+            }
         }
     });
 
@@ -553,7 +1210,108 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             node_type: SimulationControllerType,
             node_id: SharedString,
             args: RemoveMediaFile| {
+
             println!("remove_media_file {:?}", node_id);
+
+            let node_id = node_id.parse::<NodeId>().unwrap();
+            
+            let uuid = args.uuid.parse::<Uuid>().unwrap();
+
+            match node_type {
+                SimulationControllerType::WebBrowser => {
+                    let sender1 = &sc_remove_media_file
+                        .clients
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(WebCommand::RemoveMediaFile(uuid)));
+                }
+
+                SimulationControllerType::WebServer => {
+                    let sender1 = &sc_remove_media_file
+                        .servers
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(WebCommand::RemoveMediaFile(uuid)));
+                }
+
+                _ => {}
+            }
+        }
+    });
+
+    main_window.on_query_text_files_list({
+        move |node_command: SimulationControllerCommand,
+            node_type: SimulationControllerType,
+            node_id: SharedString| {
+
+            println!("query_text_files_list {:?}", node_id);
+
+            let node_id = node_id.parse::<NodeId>().unwrap();
+            
+            match node_type {
+                SimulationControllerType::WebBrowser => {
+                    let sender1 = &sc_query_text_files_list
+                        .clients
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(WebCommand::QueryTextFilesList));
+                }
+
+                SimulationControllerType::WebServer => {
+                    let sender1 = &sc_query_text_files_list
+                        .servers
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(WebCommand::QueryTextFilesList));
+                }
+
+                _ => {}
+            }
+        }
+    });
+
+    main_window.on_get_text_files_list({
+        move |node_command: SimulationControllerCommand,
+            node_type: SimulationControllerType,
+            node_id: SharedString| {
+
+            println!("get_text_files_list {:?}", node_id);
+
+            let node_id = node_id.parse::<NodeId>().unwrap();
+            
+            match node_type {
+                SimulationControllerType::WebBrowser => {
+                    let sender1 = &sc_get_text_files_list
+                        .clients
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(WebCommand::GetTextFilesList));
+                }
+
+                SimulationControllerType::WebServer => {
+                    let sender1 = &sc_get_text_files_list
+                        .servers
+                        .get(&node_id)
+                        .unwrap()
+                        .1;
+
+                    sender1.send(Box::new(WebCommand::GetTextFilesList));
+                }
+
+                _ => {}
+            }
+
+            //TODO salvare file
         }
     });
 
