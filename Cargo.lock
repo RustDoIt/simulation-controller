@@ -4535,8 +4535,10 @@ dependencies = [
  "ctrlc",
  "network-initializer",
  "once_cell",
+ "regex",
  "slint",
  "slint-build",
+ "uuid",
  "wg_internal",
 ]
 

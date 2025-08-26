@@ -6,9 +6,13 @@ import { SimulationControllerCommand, SimulationControllerType, DroneButton, Cli
 
 import { AddSender, AddSenderMenu } from "menu/add_sender_menu.slint";
 import { RemoveSender, RemoveSenderMenu } from "menu/remove_sender_menu.slint";
+import { SetPacketDropRate, SetPacketDropRateMenu } from "menu/set_packet_drop_rate_menu.slint";
 import { SendMessage, SendMessageMenu } from "menu/send_message_menu.slint";
+import { RegisterToServer, RegisterToServerMenu } from "menu/register_to_server_menu.slint";
 import { GetFile, GetFileMenu } from "menu/get_file_menu.slint";
+import { GetTextFile, GetTextFileMenu } from "menu/get_text_file_menu.slint";
 import { GetMediaFile, GetMediaFileMenu } from "menu/get_media_file_menu.slint";
+import { AddTextFile, AddTextFileMenu } from "menu/add_text_file_menu.slint";
 import { AddTextFileFromPath, AddTextFileFromPathMenu } from "menu/add_text_file_from_path_menu.slint";
 import { AddMediaFileFromPath, AddMediaFileFromPathMenu } from "menu/add_media_file_from_path_menu.slint";
 import { RemoveTextFile, RemoveTextFileMenu } from "menu/remove_text_file_menu.slint";
@@ -49,22 +53,28 @@ export component MainWindow inherits Window {
     callback add_sender(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: AddSender);
     callback remove_sender(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: RemoveSender);
     callback shutdown(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string);
+    callback crash(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string);
+    callback set_packet_drop_rate(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: SetPacketDropRate);
 
     callback get_chats_history(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string);
     callback get_registered_clients(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string);
     callback send_message(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: SendMessage);
+    callback register_to_server(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: RegisterToServer);
 
     callback get_cached_files(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string);
     callback get_file(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: GetFile);
     callback get_text_files(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string);
+    callback get_text_file(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: GetTextFile);
     callback get_media_files(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string);
     callback get_media_file(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: GetMediaFile);
-    //callback add_text_file(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: AddTextFile);
+    callback add_text_file(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: AddTextFile);
     callback add_text_file_from_path(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: AddTextFileFromPath);
     //callback add_media_file(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: AddMediaFile);
     callback add_media_file_from_path(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: AddMediaFileFromPath);
     callback remove_text_file(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: RemoveTextFile);
     callback remove_media_file(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: RemoveMediaFile);
+    callback query_text_files_list(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string);
+    callback get_text_files_list(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string);
 
     width: 1280px;
     height: 720px;
@@ -149,6 +159,15 @@ export component MainWindow inherits Window {
                                 else if node_command == SimulationControllerCommand.Shutdown {
                                     shutdown(node_command, node-type, node_id);
                                 }
+                                else if node_command == SimulationControllerCommand.Crash {
+                                    crash(node_command, node-type, node_id);
+                                }
+                                else if node_command == SimulationControllerCommand.SetPacketDropRate {
+                                    set_packet_drop_rate_menu.node_command = node_command;
+                                    set_packet_drop_rate_menu.node_type = node_type;
+                                    set_packet_drop_rate_menu.node_id = node_id;
+                                    set_packet_drop_rate_menu.visible = true;
+                                }
                                 else if node_command == SimulationControllerCommand.GetChatsHistory {
                                     get_chats_history(node_command, node-type, node_id);
                                 }
@@ -161,6 +180,12 @@ export component MainWindow inherits Window {
                                     send_message_menu.node_id = node_id;
                                     send_message_menu.visible = true;
                                 }
+                                else if node_command == SimulationControllerCommand.RegisterToServer {
+                                    register_to_server_menu.node_command = node_command;
+                                    register_to_server_menu.node_type = node_type;
+                                    register_to_server_menu.node_id = node_id;
+                                    register_to_server_menu.visible = true;
+                                } 
                                 else if node_command == SimulationControllerCommand.GetCachedFiles {
                                     get_cached_files(node_command, node-type, node_id);
                                 }
@@ -173,6 +198,12 @@ export component MainWindow inherits Window {
                                 else if node_command == SimulationControllerCommand.GetTextFiles {
                                     get_text_files(node_command, node-type, node_id);
                                 }
+                                else if node_command == SimulationControllerCommand.GetTextFile {
+                                    get_text_file_menu.node_command = node_command;
+                                    get_text_file_menu.node_type = node_type;
+                                    get_text_file_menu.node_id = node_id;
+                                    get_text_file_menu.visible = true;
+                                }
                                 else if node_command == SimulationControllerCommand.GetMediaFiles {
                                     get_media_files(node_command, node-type, node_id);
                                 }
@@ -181,6 +212,12 @@ export component MainWindow inherits Window {
                                     get_media_file_menu.node_type = node_type;
                                     get_media_file_menu.node_id = node_id;
                                     get_media_file_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.AddTextFile {
+                                    add_text_file_menu.node_command = node_command;
+                                    add_text_file_menu.node_type = node_type;
+                                    add_text_file_menu.node_id = node_id;
+                                    add_text_file_menu.visible = true;
                                 }
                                 else if node_command == SimulationControllerCommand.AddTextFileFromPath {
                                     add_text_file_from_path_menu.node_command = node_command;
@@ -205,6 +242,12 @@ export component MainWindow inherits Window {
                                     remove_media_file_menu.node_type = node_type;
                                     remove_media_file_menu.node_id = node_id;
                                     remove_media_file_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.QueryTextFilesList {
+                                    query_text_files_list(node_command, node-type, node_id);
+                                }
+                                else if node_command == SimulationControllerCommand.GetTextFilesList {
+                                    get_text_files_list(node_command, node-type, node_id);
                                 }
                             }
                         }
@@ -242,6 +285,15 @@ export component MainWindow inherits Window {
                                 else if node_command == SimulationControllerCommand.Shutdown {
                                     shutdown(node_command, node-type, node_id);
                                 }
+                                else if node_command == SimulationControllerCommand.Crash {
+                                    crash(node_command, node-type, node_id);
+                                }
+                                else if node_command == SimulationControllerCommand.SetPacketDropRate {
+                                    set_packet_drop_rate_menu.node_command = node_command;
+                                    set_packet_drop_rate_menu.node_type = node_type;
+                                    set_packet_drop_rate_menu.node_id = node_id;
+                                    set_packet_drop_rate_menu.visible = true;
+                                }
                                 else if node_command == SimulationControllerCommand.GetChatsHistory {
                                     get_chats_history(node_command, node-type, node_id);
                                 }
@@ -254,6 +306,12 @@ export component MainWindow inherits Window {
                                     send_message_menu.node_id = node_id;
                                     send_message_menu.visible = true;
                                 }
+                                else if node_command == SimulationControllerCommand.RegisterToServer {
+                                    register_to_server_menu.node_command = node_command;
+                                    register_to_server_menu.node_type = node_type;
+                                    register_to_server_menu.node_id = node_id;
+                                    register_to_server_menu.visible = true;
+                                } 
                                 else if node_command == SimulationControllerCommand.GetCachedFiles {
                                     get_cached_files(node_command, node-type, node_id);
                                 }
@@ -266,6 +324,12 @@ export component MainWindow inherits Window {
                                 else if node_command == SimulationControllerCommand.GetTextFiles {
                                     get_text_files(node_command, node-type, node_id);
                                 }
+                                else if node_command == SimulationControllerCommand.GetTextFile {
+                                    get_text_file_menu.node_command = node_command;
+                                    get_text_file_menu.node_type = node_type;
+                                    get_text_file_menu.node_id = node_id;
+                                    get_text_file_menu.visible = true;
+                                }
                                 else if node_command == SimulationControllerCommand.GetMediaFiles {
                                     get_media_files(node_command, node-type, node_id);
                                 }
@@ -274,6 +338,12 @@ export component MainWindow inherits Window {
                                     get_media_file_menu.node_type = node_type;
                                     get_media_file_menu.node_id = node_id;
                                     get_media_file_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.AddTextFile {
+                                    add_text_file_menu.node_command = node_command;
+                                    add_text_file_menu.node_type = node_type;
+                                    add_text_file_menu.node_id = node_id;
+                                    add_text_file_menu.visible = true;
                                 }
                                 else if node_command == SimulationControllerCommand.AddTextFileFromPath {
                                     add_text_file_from_path_menu.node_command = node_command;
@@ -298,6 +368,12 @@ export component MainWindow inherits Window {
                                     remove_media_file_menu.node_type = node_type;
                                     remove_media_file_menu.node_id = node_id;
                                     remove_media_file_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.QueryTextFilesList {
+                                    query_text_files_list(node_command, node-type, node_id);
+                                }
+                                else if node_command == SimulationControllerCommand.GetTextFilesList {
+                                    get_text_files_list(node_command, node-type, node_id);
                                 }
                             }
                         }
@@ -335,6 +411,15 @@ export component MainWindow inherits Window {
                                 else if node_command == SimulationControllerCommand.Shutdown {
                                     shutdown(node_command, node-type, node_id);
                                 }
+                                else if node_command == SimulationControllerCommand.Crash {
+                                    crash(node_command, node-type, node_id);
+                                }
+                                else if node_command == SimulationControllerCommand.SetPacketDropRate {
+                                    set_packet_drop_rate_menu.node_command = node_command;
+                                    set_packet_drop_rate_menu.node_type = node_type;
+                                    set_packet_drop_rate_menu.node_id = node_id;
+                                    set_packet_drop_rate_menu.visible = true;
+                                }
                                 else if node_command == SimulationControllerCommand.GetChatsHistory {
                                     get_chats_history(node_command, node-type, node_id);
                                 }
@@ -347,6 +432,12 @@ export component MainWindow inherits Window {
                                     send_message_menu.node_id = node_id;
                                     send_message_menu.visible = true;
                                 }
+                                else if node_command == SimulationControllerCommand.RegisterToServer {
+                                    register_to_server_menu.node_command = node_command;
+                                    register_to_server_menu.node_type = node_type;
+                                    register_to_server_menu.node_id = node_id;
+                                    register_to_server_menu.visible = true;
+                                } 
                                 else if node_command == SimulationControllerCommand.GetCachedFiles {
                                     get_cached_files(node_command, node-type, node_id);
                                 }
@@ -359,6 +450,12 @@ export component MainWindow inherits Window {
                                 else if node_command == SimulationControllerCommand.GetTextFiles {
                                     get_text_files(node_command, node-type, node_id);
                                 }
+                                else if node_command == SimulationControllerCommand.GetTextFile {
+                                    get_text_file_menu.node_command = node_command;
+                                    get_text_file_menu.node_type = node_type;
+                                    get_text_file_menu.node_id = node_id;
+                                    get_text_file_menu.visible = true;
+                                }
                                 else if node_command == SimulationControllerCommand.GetMediaFiles {
                                     get_media_files(node_command, node-type, node_id);
                                 }
@@ -367,6 +464,12 @@ export component MainWindow inherits Window {
                                     get_media_file_menu.node_type = node_type;
                                     get_media_file_menu.node_id = node_id;
                                     get_media_file_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.AddTextFile {
+                                    add_text_file_menu.node_command = node_command;
+                                    add_text_file_menu.node_type = node_type;
+                                    add_text_file_menu.node_id = node_id;
+                                    add_text_file_menu.visible = true;
                                 }
                                 else if node_command == SimulationControllerCommand.AddTextFileFromPath {
                                     add_text_file_from_path_menu.node_command = node_command;
@@ -391,6 +494,12 @@ export component MainWindow inherits Window {
                                     remove_media_file_menu.node_type = node_type;
                                     remove_media_file_menu.node_id = node_id;
                                     remove_media_file_menu.visible = true;
+                                }
+                                else if node_command == SimulationControllerCommand.QueryTextFilesList {
+                                    query_text_files_list(node_command, node-type, node_id);
+                                }
+                                else if node_command == SimulationControllerCommand.GetTextFilesList {
+                                    get_text_files_list(node_command, node-type, node_id);
                                 }
                             }
                         }
@@ -470,9 +579,21 @@ export component MainWindow inherits Window {
         }
     }
 
+    set_packet_drop_rate_menu := SetPacketDropRateMenu {
+        on_ok(node_command, node_type, node_id, args) => {
+            root.set_packet_drop_rate(node_command, node_type, node_id, args);
+        }
+    }
+
     send_message_menu := SendMessageMenu {
         on_ok(node_command, node_type, node_id, args) => {
             root.send_message(node_command, node_type, node_id, args);
+        }
+    }
+
+    register_to_server_menu := RegisterToServerMenu {
+        on_ok(node_command, node_type, node_id, args) => {
+            root.register_to_server(node_command, node_type, node_id, args);
         }
     }
 
@@ -482,9 +603,21 @@ export component MainWindow inherits Window {
         }
     }
 
+    get_text_file_menu := GetTextFileMenu {
+        on_ok(node_command, node_type, node_id, args) => {
+            root.get_text_file(node_command, node_type, node_id, args);
+        }
+    }
+
     get_media_file_menu := GetMediaFileMenu {
         on_ok(node_command, node_type, node_id, args) => {
             root.get_media_file(node_command, node_type, node_id, args);
+        }
+    }
+
+    add_text_file_menu := AddTextFileMenu {
+        on_ok(node_command, node_type, node_id, args) => {
+            root.add_text_file(node_command, node_type, node_id, args);
         }
     }
 

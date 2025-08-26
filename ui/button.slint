@@ -4,10 +4,13 @@ export enum SimulationControllerCommand {
     AddSender,
     RemoveSender,
     Shutdown,
+    Crash,
+    SetPacketDropRate,
 
     GetChatsHistory,
     GetRegisteredClients,
     SendMessage,
+    RegisterToServer,
 
     GetCachedFiles,
     GetFile,
@@ -21,6 +24,8 @@ export enum SimulationControllerCommand {
     AddMediaFileFromPath,
     RemoveTextFile,
     RemoveMediaFile,
+    QueryTextFilesList,
+    GetTextFilesList
 }
 
 export enum SimulationControllerType {
@@ -193,7 +198,8 @@ export component DroneButton inherits Button {
     items: [
         {label: "Add Sender", node_command: SimulationControllerCommand.AddSender},
         {label: "Remove Sender", node_command: SimulationControllerCommand.RemoveSender},
-        {label: "Shutdown", node_command: SimulationControllerCommand.Shutdown},
+        {label: "Crash", node_command: SimulationControllerCommand.Crash},
+        {label: "Set Packet Drop Rate", node_command: SimulationControllerCommand.SetPacketDropRate},
     ];
 
     node_type: SimulationControllerType.Drone;
@@ -209,6 +215,7 @@ export component ClientButton inherits Button {
         {label: "Get Chats History", node_command: SimulationControllerCommand.GetChatsHistory},
         {label: "Get Registered Clients", node_command: SimulationControllerCommand.GetRegisteredClients},
         {label: "Send Message", node_command: SimulationControllerCommand.SendMessage},
+        {label: "Register To Server", node_command: SimulationControllerCommand.RegisterToServer},
     ];
 
     property <[Item]> web_items: [
@@ -227,6 +234,8 @@ export component ClientButton inherits Button {
         {label: "Add Media File From Path", node_command: SimulationControllerCommand.AddMediaFileFromPath},
         {label: "Remove Text File", node_command: SimulationControllerCommand.RemoveTextFile},
         {label: "Remove Media File", node_command: SimulationControllerCommand.RemoveMediaFile},
+        {label: "Query Text File List", node_command: SimulationControllerCommand.QueryTextFilesList},
+        {label: "Get Text Files List", node_command: SimulationControllerCommand.GetTextFilesList},
     ];
 
     items: self.subtitle == "Chat-Client" ? chat_items : web_items;
@@ -243,6 +252,7 @@ export component ServerButton inherits Button {
         {label: "Get Chats History", node_command: SimulationControllerCommand.GetChatsHistory},
         {label: "Get Registered Clients", node_command: SimulationControllerCommand.GetRegisteredClients},
         {label: "Send Message", node_command: SimulationControllerCommand.SendMessage},
+        {label: "Register To Server", node_command: SimulationControllerCommand.RegisterToServer},
     ];
 
     property <[Item]> web_items: [
@@ -261,6 +271,8 @@ export component ServerButton inherits Button {
         {label: "Add Media File From Path", node_command: SimulationControllerCommand.AddMediaFileFromPath},
         {label: "Remove Text File", node_command: SimulationControllerCommand.RemoveTextFile},
         {label: "Remove Media File", node_command: SimulationControllerCommand.RemoveMediaFile},
+        {label: "Query Text File List", node_command: SimulationControllerCommand.QueryTextFilesList},
+        {label: "Get Text Files List", node_command: SimulationControllerCommand.GetTextFilesList},
     ];
 
     items: self.subtitle == "Chat-Server" ? chat_items : web_items;
