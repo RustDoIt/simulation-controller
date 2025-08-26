@@ -276,29 +276,32 @@ impl SimulationController {
                         ChatEvent::MessageSent {
                             notification_from,
                             to,
-                        } => todo!(),
+                        } => utils::log(&format!("NOTIFICATION FROM: {notification_from}, MESSAGE SENT TO: {to}")),
                         ChatEvent::MessageReceived {
                             notification_from,
                             msg,
-                        } => todo!(),
-                        ChatEvent::ClientRegistered { client, server } => todo!(),
+                        } => utils::log(&format!("NOTIFICATION FROM: {notification_from}, RECEIVED MESSAGE {msg}")),
+                        ChatEvent::ClientRegistered {
+                            client,
+                            server
+                        } => utils::log(&format!("NOTIFICATION FROM: {server}, REGISTERED CLIENT {client}")),
                         ChatEvent::ClientListQueried {
                             notification_from,
                             from,
-                        } => todo!(),
+                        } => utils::log(&format!("NOTIFICATION FROM: {notification_from}, CLIENT LIST QUERIED BY {from}")),
                         ChatEvent::ClientNotInList {
                             notification_from,
                             id,
-                        } => todo!(),
+                        } => utils::log(&format!("NOTIFICATION FROM: {notification_from}, CLIENT {id} NOT IN REGISTERED CLIENTS")),
                         ChatEvent::ErrorClientNotFound {
                             notification_from,
                             location,
                             not_found,
-                        } => todo!(),
+                        } => utils::log(&format!("NOTIFICATION FROM: {notification_from}, CLIENT {not_found} IS NOT REGISTERED IN SERVER {location}")),
                         ChatEvent::RegistrationSucceeded {
                             notification_from,
                             to,
-                        } => todo!(),
+                        } => utils::log(&format!("NOTIFICATION FROM: {notification_from}, SUCCESSFULLY REGISTERED TO SERVER {to}")),
                     }
                 } else if let Some(event) = event.downcast_ref::<NodeEvent>() {
                     match event {
