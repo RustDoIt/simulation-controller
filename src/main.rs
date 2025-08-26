@@ -174,7 +174,7 @@ impl SimulationController {
                             notification_from,
                             file,
                         } => {
-                            
+
                             utils::log(&format!("NOTIFICATION FROM: {notification_from}, MEDIA FILE RECEIVED: {}", file.id.to_string()));
                             file_conversion::save_media_file(notification_from, file);
                         },
@@ -299,21 +299,27 @@ impl SimulationController {
                     }
                 } else if let Some(event) = event.downcast_ref::<NodeEvent>() {
                     match event {
-                        NodeEvent::PacketSent(packet) => todo!(),
-                        NodeEvent::FloodStarted(_, _) => todo!(),
-                        NodeEvent::NodeRemoved(_) => todo!(),
+                        NodeEvent::PacketSent(packet) => {
+                            utils::log(&format!("PACKET SENT: {}", packet));
+                        },
+                        NodeEvent::FloodStarted(flood_counter,node_id) => {
+                            utils::log(&format!("NOTIFICATION FROM: {}, FLOOD STARTED {} FLOOD", node_id, flood_counter));
+                        },
+                        NodeEvent::NodeRemoved(node_id) => {
+                            utils::log(&format!("REMOVED {} NODE", node_id));
+                        },
                         NodeEvent::MessageReceived {
                             notification_from,
                             from,
-                        } => todo!(),
+                        } => utils::log(&format!("NOTIFICATION FROM: {notification_from}, MESSAGE RECEIVED FROM: {from}")),
                         NodeEvent::MessageSent {
                             notification_from,
                             to,
-                        } => todo!(),
+                        } => utils::log(&format!("NOTIFICATION FROM: {notification_from}, MESSAGE SENT TO: {to}")),
                         NodeEvent::ServerTypeQueried {
                             notification_from,
                             from,
-                        } => todo!(),
+                        } => utils::log(&format!("NOTIFICATION FROM: {notification_from}, SERVER TYPE QUERIED FROM: {from}")),
                     }
                 }
             }
