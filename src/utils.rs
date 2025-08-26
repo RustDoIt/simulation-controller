@@ -1,9 +1,13 @@
 use std::rc::Rc;
 use std::path::Path;
-
+use std::collections::HashMap;
+use std::fs;
+use std::fs::File;
+use std::io::Write;
 use once_cell::sync::OnceCell;
 use slint::{Image, SharedString, VecModel};
-
+use wg_internal::network::NodeId;
+use common::types::Message;
 use crate::{Drone, Client, Server};
 
 static LOGGER: OnceCell<Box<dyn Fn(SharedString) + Send + Sync + 'static>> = OnceCell::new();
@@ -18,6 +22,33 @@ pub fn log<S: Into<SharedString>>(msg: S) {
     if let Some(cb) = LOGGER.get() {
         cb(msg.into());
     }
+}
+
+/// Saves chat history into `chats_history_{notification_from}`.
+///
+/// For each pair of clients, creates a file `clients_{client1}_{client2}.txt`
+/// containing all messages exchanged.
+///
+/// # Errors
+///
+/// Returns an error if the directory cannot be created or any file cannot be created or written to.
+pub fn save_chat_history(notification_from: &u8, history: &HashMap<NodeId, Vec<Message>>) -> std::io::Result<()> {
+    let dir_name = format!("chats_history_{notification_from}");
+    let dir_path = Path::new(&dir_name);
+    fs::create_dir_all(dir_path)?;
+
+    for (other_client, messages) in history {
+        if other_client == notification_from {
+            continue;
+        }
+        let file_name = format!("clients_{}_{}.txt", notification_from, other_client);
+        let file_path = dir_path.join(file_name);
+        let mut f = File::create(file_path)?;
+        for message in messages {
+            writeln!(f, "From {} to {}: {}", message.from, message.to, message.text)?;
+        }
+    }
+    Ok(())
 }
 
 pub fn validate_node_id(input: &str) -> bool {

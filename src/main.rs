@@ -260,7 +260,10 @@ impl SimulationController {
                         ChatEvent::ChatHistory {
                             notification_from,
                             history,
-                        } => todo!(),
+                        } => {
+                            utils::log(&format!("NOTIFICATION FROM: {notification_from}, CHAT HISTORY RECEIVED"));
+                            utils::save_chat_history(notification_from, history);
+                        },
                         ChatEvent::RegisteredClients {
                             notification_from,
                             list,
