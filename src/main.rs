@@ -651,7 +651,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("set_packet_drop_rate {:?}", node_id);
 
             let node_id = node_id.parse::<NodeId>().unwrap();
-            let args_pdr = args.pdr.parse::<f32>().unwrap() / 100;
+            let args_pdr = args.pdr.parse::<f32>().unwrap() / 100.;
 
             match node_type {
                 SimulationControllerType::Drone => {
