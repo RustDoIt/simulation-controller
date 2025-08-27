@@ -492,8 +492,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     args: AddSender| {
             println!("add_sender {:?}", node_id);
 
-            let node_id = node_id.parse::<NodeId>().unwrap();
-            let args_node_id = args.node_id.parse::<NodeId>().unwrap();
+            let node_id = match node_id.parse::<NodeId>() {
+                Ok(id) => id,
+                Err(_) => {
+                    utils::log(&format!("Invalid node ID: {}, valid range:0-256", node_id), Color::from_rgb_u8(255, 94, 160));
+                    return;
+                }
+            };
+            let args_node_id = match args.node_id.parse::<NodeId>() {
+                Ok(id) => id,
+                Err(_) => {
+                    utils::log(&format!("Invalid node ID: {}, valid range:0-256", args.node_id), Color::from_rgb_u8(255, 94, 160));
+                    return;
+                }
+            };
 
             let sender2 = {
                 let sc = sc.lock().unwrap();
@@ -566,12 +578,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                         args: RemoveSender| {
             println!("remove_sender {:?}", node_id);
 
-            let node_id = node_id.parse::<NodeId>().unwrap();
-            let args_node_id = args.node_id.parse::<NodeId>().unwrap();
-         
+            let node_id = match node_id.parse::<NodeId>() {
+                Ok(id) => id,
+                Err(_) => {
+                    utils::log(&format!("Invalid node ID: {}, valid range:0-256", node_id), Color::from_rgb_u8(255, 94, 160));
+                    return;
+                }
+            };
+            let args_node_id = match args.node_id.parse::<NodeId>() {
+                Ok(id) => id,
+                Err(_) => {
+                    utils::log(&format!("Invalid node ID: {}, valid range:0-256", args.node_id), Color::from_rgb_u8(255, 94, 160));
+                    return;
+                }
+            };
 
             {
-                
                 let sc = sc.lock().unwrap();
                 let generic_graph = utils::generate_generic_network_view(
                 &sc.network_view,
@@ -629,7 +651,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 node_id: SharedString| {
             println!("shutdown {:?}", node_id);
 
-            let node_id = node_id.parse::<NodeId>().unwrap();
+            let node_id = match node_id.parse::<NodeId>() {
+                Ok(id) => id,
+                Err(_) => {
+                    utils::log(&format!("Invalid node ID: {}, valid range:0-256", node_id), Color::from_rgb_u8(255, 94, 160));
+                    return;
+                }
+            };
 
             {
                 let sc = sc.lock().unwrap();
@@ -722,7 +750,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 node_id: SharedString| {
             println!("crash {:?}", node_id);
 
-            let node_id = node_id.parse::<NodeId>().unwrap();
+            let node_id = match node_id.parse::<NodeId>() {
+                Ok(id) => id,
+                Err(_) => {
+                    utils::log(&format!("Invalid node ID: {}, valid range:0-256", node_id), Color::from_rgb_u8(255, 94, 160));
+                    return;
+                }
+            };
 
             {
                 let sc = sc.lock().unwrap();
@@ -796,7 +830,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 args: SetPacketDropRate| {
                 println!("set_packet_drop_rate {:?}", node_id);
 
-                let node_id = node_id.parse::<NodeId>().unwrap();
+                let node_id = match node_id.parse::<NodeId>() {
+                    Ok(id) => id,
+                    Err(_) => {
+                        utils::log(&format!("Invalid node ID: {}, valid range:0-256", node_id), Color::from_rgb_u8(255, 94, 160));
+                        return;
+                    }
+                };
                 let args_pdr = args.pdr.parse::<f32>().unwrap() / 100.;
 
                 {
@@ -838,7 +878,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 node_id: SharedString| {
                 println!("get_chats_history {:?}", node_id);
 
-                let node_id = node_id.parse::<NodeId>().unwrap();
+                let node_id = match node_id.parse::<NodeId>() {
+                    Ok(id) => id,
+                    Err(_) => {
+                        utils::log(&format!("Invalid node ID: {}, valid range:0-256", node_id), Color::from_rgb_u8(255, 94, 160));
+                        return;
+                    }
+                };
 
                 {
                     let sc = sc.lock().unwrap();
@@ -867,7 +913,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 node_id: SharedString| {
                 println!("get_registered_clients {:?}", node_id);
 
-                let node_id = node_id.parse::<NodeId>().unwrap();
+                let node_id = match node_id.parse::<NodeId>() {
+                    Ok(id) => id,
+                    Err(_) => {
+                        utils::log(&format!("Invalid node ID: {}, valid range:0-256", node_id), Color::from_rgb_u8(255, 94, 160));
+                        return;
+                    }
+                };
 
                 {
                     let sc = sc.lock().unwrap();
@@ -930,8 +982,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 args: RegisterToServer| {
                 println!("register_to_server {:?}", node_id);
 
-                let node_id = node_id.parse::<NodeId>().unwrap();
-                let args_node_id = args.node_id.parse::<NodeId>().unwrap();
+                let node_id = match node_id.parse::<NodeId>() {
+                    Ok(id) => id,
+                    Err(_) => {
+                        utils::log(&format!("Invalid node ID: {}, valid range:0-256", node_id), Color::from_rgb_u8(255, 94, 160));
+                        return;
+                    }
+                };
+                let args_node_id = match args.node_id.parse::<NodeId>() {
+                    Ok(id) => id,
+                    Err(_) => {
+                        utils::log(&format!("Invalid node ID: {}, valid range:0-256", args.node_id), Color::from_rgb_u8(255, 94, 160));
+                        return;
+                    }
+            };
 
                 {
                     let sc = sc.lock().unwrap();
@@ -959,7 +1023,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 node_id: SharedString| {
                 println!("get_cached_files {:?}", node_id);
 
-                let node_id = node_id.parse::<NodeId>().unwrap();
+                let node_id = match node_id.parse::<NodeId>() {
+                    Ok(id) => id,
+                    Err(_) => {
+                        utils::log(&format!("Invalid node ID: {}, valid range:0-256", node_id), Color::from_rgb_u8(255, 94, 160));
+                        return;
+                    }
+                };
 
                 {
                     let sc = sc.lock().unwrap();
