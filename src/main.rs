@@ -30,6 +30,8 @@ use wg_internal::network::NodeId;
 use slint::{Color, ComponentHandle, Model, SharedString, VecModel, Weak};
 use wg_internal::packet::Packet;
 
+use crate::utils::generate_generic_network_view;
+
 slint::include_modules!();
 
 
@@ -507,6 +509,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             {
                 let sc = sc.lock().unwrap();
+                let generic_graph = utils::generate_generic_network_view(
+                    &sc.network_view,
+                    &sc.clients,
+                    &sc.servers,
+                    &sc.drones,
+                );
                 match node_type {
                     SimulationControllerType::Drone => {
                         let sender1 = &sc.drones.get(&node_id).unwrap().1;
@@ -517,6 +525,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         sender1.send(Box::new(NodeCommand::AddSender(args_node_id.clone(), sender2.clone())));
                     }
                     SimulationControllerType::ChatServer | SimulationControllerType::WebServer => {
+                        if !validation::is_a_drone(&generic_graph,node_id, args_node_id) {
+                            utils::log(&format!("Cannot add sender {args_node_id} to server {node_id}: only drones can be added to servers"), Color::from_rgb_u8(255, 94, 160));
+                            return;
+                        }
+                        println!("adding sender {} to server {}", args_node_id, node_id);
                         let sender1 = &sc.servers.get(&node_id).unwrap().1;
                         sender1.send(Box::new(NodeCommand::AddSender(args_node_id.clone(), sender2.clone())));
                     }
@@ -580,6 +593,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         sender1.send(Box::new(NodeCommand::RemoveSender(args_node_id.clone())));
                     }
                     SimulationControllerType::ChatServer | SimulationControllerType::WebServer => {
+                        if !validation::can_remove_sender_server(&generic_graph, node_id, args_node_id, &sc.servers) {
+                            utils::log(&format!("Cannot remove sender {args_node_id} from server {node_id}: this server is attached to only 2 drones or the sender is not connected with the server"), Color::from_rgb_u8(255, 94, 160));
+                            return;
+                        }
                         let sender1 = &sc.servers.get(&node_id).unwrap().1;
                         sender1.send(Box::new(NodeCommand::RemoveSender(args_node_id.clone())));
                     }

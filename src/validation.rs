@@ -53,3 +53,19 @@ pub fn can_remove_sender_drone(network_graph: &HashMap<(NodeId, String), HashSet
         false
     }
 }
+
+pub fn can_remove_sender_server(network_graph: &HashMap<(NodeId, String), HashSet<NodeId>>, server_id: NodeId, sender_id: NodeId, servers: &HashMap<NodeId, (NodeType, Sender<Box<dyn Command>>)>) -> bool {
+    if let Some(h) = network_graph.get(&(server_id, "server".to_string())) {
+        if h.contains(&sender_id) {
+            return h.len() > 2; // if the sender(drone) is in the server, we can remove it only if there are more than 2 drones
+        }
+        return false; // if the sender is not in the server, we cannot remove it
+    }
+    false // cannot find the server
+}
+pub fn is_a_drone(network_graph: &HashMap<(NodeId, String), HashSet<NodeId>>, server_id: NodeId,node_id:NodeId ) -> bool {
+    if let Some(h) = network_graph.get(&(node_id, "drone".to_string())) {
+        return true; // if the node to be added is a drone, we can add it
+    }
+    false // that id does not correspond to a drone
+}
