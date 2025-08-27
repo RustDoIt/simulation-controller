@@ -111,15 +111,6 @@ pub fn handle_registered_clients(notification_from: &u8, list: &Vec<u8>, main_wi
         }
 
         mw.set_clients(Rc::new(VecModel::from(clients)).into());
-
-        // if clients_nodes.iter().any(|(node_id, _)| node_id == notification_from) {
-        //     let clients = Rc::new(VecModel::from(clients_nodes.iter().map(|(node_id, node_type)| Client { title: format!("Client {}. Can reach:  {:?}", node_id, list).into(), subtitle: node_type.into(), id: node_id.to_string().into(), kind: node_type.into() }).collect::<Vec<_>>()));
-        //     mw.set_clients(clients.into());
-        // }
-        // if servers_nodes.iter().any(|(node_id, _)| node_id == notification_from) {
-        //     let servers = Rc::new(VecModel::from(servers_nodes.iter().map(|(node_id, node_type)| Server { title: format!("Server {}. Subscribed: {:?}", node_id, list).into(), subtitle: node_type.into(), id: node_id.to_string().into(), kind: node_type.into() }).collect::<Vec<_>>()));
-        //     mw.set_servers(servers.into());
-        // }
     }
 }
 

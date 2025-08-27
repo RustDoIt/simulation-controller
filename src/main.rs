@@ -380,7 +380,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let main_window = MainWindow::new()?;
 
     let mut simulation_controller = SimulationController::default();
-    
+
     simulation_controller.start_simulation(
         "../network-initializer/config/butterfly.toml",
         main_window.as_weak(),
@@ -565,6 +565,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
 
             //TODO rimuovere collegamento grafo
+
+            // for node in sc_remove_sender.network_view.nodes.iter() {
+            //     if node_id == node.get_id() {
+            //         // remove node
+            //     }
+            // }
+
+            // for node in sc_remove_sender.network_initializer
         }
     });
 
