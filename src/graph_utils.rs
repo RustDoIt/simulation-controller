@@ -59,6 +59,7 @@ pub fn generate_graph(
     }
 
     let n = graph.len() as f64;
+
     if n == 0.0 {
         return;
     }
