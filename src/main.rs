@@ -334,7 +334,7 @@ impl SimulationController {
     }
 
     fn handle_drone_event(even: DroneEvent, ui_handle: Weak<MainWindow>) {
-        unimplemented!();
+        //unimplemented!();
     }
 
     fn get_drones_pdr(&self) -> Vec<(NodeId, f32)> {
