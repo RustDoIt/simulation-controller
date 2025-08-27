@@ -348,8 +348,16 @@ impl SimulationController {
         slint::invoke_from_event_loop(move || {
             match event { 
                 DroneEvent::PacketSent(packet) => {
-                    if let Some(hop) = packet.routing_header.previous_hop() {
-                        utils::log_default(&format!("DRONE {} - PACKET SENT: {}", hop, packet));
+                    if packet.routing_header.len() > 0 {
+                        if packet.routing_header.hop_index > 0 {
+                            if let Some(hop) = packet.routing_header.previous_hop() {
+                                utils::log_default(&format!("DRONE {} - PACKET SENT: {}", hop, packet));
+                            }
+                        } else {
+                            utils::log_default(&format!("DRONE {} - PACKET SENT: {}", packet.routing_header.hops[0], packet));
+                        }
+                    } else {
+                        utils::log_default(&format!("DRONE - PACKET SENT: {}", packet));
                     }
                 },
                 DroneEvent::ControllerShortcut(packet) => {
