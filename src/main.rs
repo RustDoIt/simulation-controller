@@ -517,21 +517,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let node_id = node_id.parse::<NodeId>().unwrap();
             let args_node_id = args.node_id.parse::<NodeId>().unwrap();
-            // let generic_graph = utils::generate_generic_network_view(
-            //     &sc.lock().unwrap().network_view,
-            //     &sc.lock().unwrap().clients,
-            //     &sc.lock().unwrap().servers,
-            //     &sc.lock().unwrap().drones,
-            // );
+         
 
             {
+                
                 let sc = sc.lock().unwrap();
+                let generic_graph = utils::generate_generic_network_view(
+                &sc.network_view,
+                    &sc.clients,
+                    &sc.servers,
+                    &sc.drones,
+                );
                 match node_type {
                     SimulationControllerType::Drone => {
-                        // if !validation::can_remove_sender_drone(&generic_graph, node_id, args_node_id, &sc.servers) {
-                        //     utils::log(&format!("Cannot remove sender {args_node_id} from drone {node_id}: this server is attached to only 2 drones"), Color::from_rgb_u8(255, 94, 160));
-                        //     return;
-                        // }
+                        if !validation::can_remove_sender_drone(&generic_graph, node_id, args_node_id, &sc.servers) {
+                            utils::log(&format!("Cannot remove sender {args_node_id} from drone {node_id}: this server is attached to only 2 drones"), Color::from_rgb_u8(255, 94, 160));
+                            return;
+                        }
                         let sender1 = &sc.drones.get(&node_id).unwrap().1;
                         sender1.send(DroneCommand::RemoveSender(args_node_id));
                     }
@@ -612,12 +614,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     {
         let sc = Arc::clone(&simulation_controller);
         let main_window_weak = main_window.as_weak();
-        // let generic_graph = utils::generate_generic_network_view(
-        //                 &sc.lock().unwrap().network_view,
-        //                 &sc.lock().unwrap().clients,
-        //                 &sc.lock().unwrap().servers,
-        //                 &sc.lock().unwrap().drones,
-        //     );
+      
         main_window.on_crash(move |node_command: SimulationControllerCommand,
                                 node_type: SimulationControllerType,
                                 node_id: SharedString| {
@@ -627,12 +624,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             {
                 let sc = sc.lock().unwrap();
+                                let generic_graph = utils::generate_generic_network_view(
+                        &sc.network_view,
+                            &sc.clients,
+                            &sc.servers,
+                            &sc.drones,
+                );
                 match node_type {
                     SimulationControllerType::Drone => {
-                        // if !validation::can_remove_drone(&generic_graph, node_id, &sc.servers) {
-                        //     utils::log(&format!("Cannot remove drone {node_id}: each server must have at least two drones"), Color::from_rgb_u8(255, 94, 160));
-                        //     return;
-                        // }
+                        if !validation::can_remove_drone(&generic_graph, node_id, &sc.servers) {
+                            utils::log(&format!("Cannot remove drone {node_id}: each server must have at least two drones"), Color::from_rgb_u8(255, 94, 160));
+                            return;
+                        }
                         let sender1 = &sc.drones.get(&node_id).unwrap().1;
                         sender1.send(DroneCommand::Crash);
                     }
@@ -675,6 +678,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let args_pdr = args.pdr.parse::<f32>().unwrap() / 100.;
 
                 {
+                    if args_pdr < 0. || args_pdr > 1. {
+                        utils::log(&format!("Packet Drop Rate must be between 0 and 100"), Color::from_rgb_u8(255, 94, 160));
+                        return;
+                    }
                     let sc = sc.lock().unwrap();
                     match node_type {
                         SimulationControllerType::Drone => {
