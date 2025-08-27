@@ -2,6 +2,7 @@
 
 mod utils;
 mod graph_utils;
+mod validation;
 
 //mod graph_utils;
 mod test;
@@ -463,6 +464,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let sc_query_text_files_list = Arc::clone(&simulation_controller);
     let sc_get_text_files_list = Arc::clone(&simulation_controller);
     let sc_add_text_file = Arc::clone(&simulation_controller);
+    let sc_on_crash_drone = Arc::clone(&simulation_controller);
+
+    
+    let generic_graph = utils::generate_generic_network_view(
+                &sc_on_crash_drone.network_view,
+                &sc_on_crash_drone.clients,
+                &sc_on_crash_drone.servers,
+                &sc_on_crash_drone.drones,
+            );
 
     main_window.on_add_sender({
         move |node_command: SimulationControllerCommand, 
@@ -531,9 +541,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let node_id = node_id.parse::<NodeId>().unwrap();
             let args_node_id = args.node_id.parse::<NodeId>().unwrap();
+            let generic_graph = utils::generate_generic_network_view(
+                &sc_remove_sender.network_view,
+                &sc_remove_sender.clients,
+                &sc_remove_sender.servers,
+                &sc_remove_sender.drones,
+            );
 
             match node_type {
                 SimulationControllerType::Drone => {
+                    if !validation::can_remove_sender_drone(&generic_graph, node_id, args_node_id, &sc_remove_sender.servers) {
+                        utils::log(&format!("Cannot remove sender {args_node_id} from drone {node_id}: this server is attached to only 2 drones"), Color::from_rgb_u8(255, 94, 160));
+                        return;
+                    }
+
                     let sender1 = &sc_remove_sender
                         .drones
                         .get(&node_id)
@@ -626,6 +647,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             match node_type {
                 SimulationControllerType::Drone => {
+                    if !validation::can_remove_drone(&generic_graph, node_id, &sc_on_crash_drone.servers) {
+                        utils::log(&format!("Cannot remove drone {node_id}: each server must have at least two drones"), Color::from_rgb_u8(255, 94, 160));
+                        return;
+                    }
+                    
                     let sender1 = &sc_crash
                         .drones
                         .get(&node_id)
