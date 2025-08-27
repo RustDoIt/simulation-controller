@@ -1,6 +1,8 @@
 #![allow(warnings)]
 
 mod utils;
+mod graph_utils;
+
 //mod graph_utils;
 mod test;
 use chrono::{Datelike, Local, Timelike};
@@ -295,9 +297,8 @@ impl SimulationController {
                         } => utils::log(&format!("NOTIFICATION FROM: {notification_from}, CLIENT {id} NOT IN REGISTERED CLIENTS")),
                         ChatEvent::ErrorClientNotFound {
                             notification_from,
-                            location,
                             not_found,
-                        } => utils::log(&format!("NOTIFICATION FROM: {notification_from}, CLIENT {not_found} IS NOT REGISTERED IN SERVER {location}")),
+                        } => utils::log(&format!("NOTIFICATION FROM: {notification_from}, CLIENT {not_found} IS NOT REGISTERED IN SERVER")),
                         ChatEvent::RegistrationSucceeded {
                             notification_from,
                             to,
@@ -385,10 +386,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         main_window.as_weak(),
     );
 
-    //graph_utils::generate_graph(&simulation_controller.network_view);
-    // let svg_bytes = graph_utils::render_network_image(&simulation_controller.network_view, "svg");
-    // let img = Image::load_from_svg_data(&svg_bytes.unwrap())?;
-    // main_window.set_graph_image(img);
+    graph_utils::generate_graph(&main_window, &simulation_controller.network_view, &simulation_controller.clients, &simulation_controller.servers, &simulation_controller.drones);
     
     // Drones
     let mut drones = simulation_controller
@@ -401,12 +399,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Clients & Servers
     let (clients, servers) = simulation_controller.get_nodes_with_type();
 
+    println!("{:?}", clients);
+    println!("{:?}", servers);
+
     // Clients    
-    let clients = Rc::new(VecModel::from(clients.iter().map(|(node_id, node_type)| Client { title: format!("Client {node_id}").into(), subtitle: node_type.into(), id: node_id.to_string().into() }).collect::<Vec<_>>()));
+    let clients = Rc::new(VecModel::from(clients.iter().map(|(node_id, node_type)| Client { title: format!("Client {node_id}").into(), subtitle: node_type.into(), id: node_id.to_string().into(), kind: node_type.into() }).collect::<Vec<_>>()));
     main_window.set_clients(clients.clone().into());
 
     // Servers
-    let servers = Rc::new(VecModel::from(servers.iter().map(|(node_id, _)| Server { title: format!("Server {node_id}").into(), subtitle: "".into(), id: node_id.to_string().into() }).collect::<Vec<_>>()));
+    let servers = Rc::new(VecModel::from(servers.iter().map(|(node_id, node_type)| Server { title: format!("Server {node_id}").into(), subtitle: node_type.into(), id: node_id.to_string().into(), kind: node_type.into() }).collect::<Vec<_>>()));
     main_window.set_servers(servers.clone().into());
 
     // Log
@@ -650,7 +651,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("set_packet_drop_rate {:?}", node_id);
 
             let node_id = node_id.parse::<NodeId>().unwrap();
-            let args_pdr = args.pdr.parse::<f32>().unwrap();
+            let args_pdr = args.pdr.parse::<f32>().unwrap() / 100.;
 
             match node_type {
                 SimulationControllerType::Drone => {

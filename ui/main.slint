@@ -3,6 +3,7 @@ import "../assets/fonts/Satoshi-Regular.ttf";
 import { Palette } from "palette.slint";
 
 import { SimulationControllerCommand, SimulationControllerType, DroneButton, ClientButton, ServerButton } from "button.slint";
+import { Position, Edge, Circle, Line } from "graph.slint";
 
 import { AddSender, AddSenderMenu } from "menu/add_sender_menu.slint";
 import { RemoveSender, RemoveSenderMenu } from "menu/remove_sender_menu.slint";
@@ -28,15 +29,18 @@ export struct Client {
     title: string,
     subtitle: string,
     id: string,
+    kind: string,
 }
 
 export struct Server {
     title: string,
     subtitle: string,
     id: string,
+    kind: string
 }
 
 export component MainWindow inherits Window {
+
     in property <[Drone]> drones;
     in property <[Client]> clients;
     in property <[Server]> servers;
@@ -44,6 +48,9 @@ export component MainWindow inherits Window {
     in property <image> graph_image: @image-url("../assets/images/placeholder.png");
 
     in property <[string]> logs;
+
+    in property <[Position]> nodes;
+    in property <[Edge]> edges;
 
     callback add_log(input: string);
     
@@ -77,7 +84,12 @@ export component MainWindow inherits Window {
 
     width: 1280px;
     height: 720px;
+
+    title: "Rust Do It";
+    icon: @image-url("../assets/images/icons/icon.png");
+    
     default-font-family: "Satoshi";
+
     background: Palette.bg_alt;
 
     VerticalLayout {
@@ -139,7 +151,7 @@ export component MainWindow inherits Window {
                         for drone[i] in drones : DroneButton {
                             title: drone.title;
                             subtitle: "PDR " + drone.pdr + "%";
-
+                            
                             node_id: drone.id;
 
                             item_clicked(node_command, node_type, node_id) => {
@@ -265,7 +277,7 @@ export component MainWindow inherits Window {
                         for client[i] in clients : ClientButton {
                             title: client.title;
                             subtitle: client.subtitle;
-
+                            kind: client.kind;
                             node_id: client.id;
 
                             item_clicked(node_command, node_type, node_id) => {
@@ -391,7 +403,7 @@ export component MainWindow inherits Window {
                         for server[i] in servers : ServerButton {
                             title: server.title;
                             subtitle: server.subtitle;
-
+                            kind: server.kind;
                             node_id: server.id;
 
                             item_clicked(node_command, node_type, node_id) => {
@@ -512,7 +524,7 @@ export component MainWindow inherits Window {
                 vertical-stretch: 1; 
                 background: Palette.bg; 
                 clip: true;
-                
+
                 VerticalLayout {
                     width: parent.width;
                     height: parent.height;
@@ -524,6 +536,22 @@ export component MainWindow inherits Window {
                         width: 624px;
                         height: 624px;
                     }
+                }
+
+                for edge[i] in edges: Line {
+                    from_x: edge.from_x;
+                    from_y: edge.from_y;
+                    to_x: edge.to_x;
+                    to_y: edge.to_y;
+                    offset: edge.offset;
+                }
+
+                for node[i] in nodes: Circle {
+                    center_x: node.x;
+                    center_y: node.y;
+                    size: node.size;
+                    kind: node.kind;
+                    label: node.label;
                 }
             }
 
@@ -557,6 +585,7 @@ export component MainWindow inherits Window {
 
                         for log[i] in logs : Text {
                             text: log;
+                            wrap: word-wrap;
                         }
                         
                     }
