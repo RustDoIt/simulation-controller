@@ -88,6 +88,8 @@ export component MainWindow inherits Window {
     callback query_text_files_list(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string);
     callback get_text_files_list(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string);
 
+    callback stop_simulation();
+
     width: 1280px;
     height: 720px;
 
@@ -108,8 +110,9 @@ export component MainWindow inherits Window {
             HorizontalLayout {
                 padding-left: 16px;
                 padding-right: 16px;
-                alignment: start;
+                alignment: space-between;   // spread items left and right
 
+                // Left side: logo
                 VerticalLayout {
                     alignment: center;
 
@@ -119,8 +122,31 @@ export component MainWindow inherits Window {
                         height: 32px;
                     }
                 }
+
+                VerticalLayout {
+                    alignment: center;
+
+                    Rectangle {
+                        width: 150px;
+                        height: 48px;
+                        background: ss_ta.has-hover ? #e05244 : Palette.red;
+
+                        ss_ta := TouchArea {
+                            clicked => {
+                                stop_simulation();
+                            }
+                        }
+
+                        Text {
+                            text: "Stop Simulation";
+                            font-size: 16px;
+                            font-weight: 800;
+                        }
+                    }
+                }
             }
         }
+
 
         Rectangle { height: 1px; background: Palette.bg_alt; }
 

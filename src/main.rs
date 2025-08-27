@@ -382,7 +382,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut simulation_controller = SimulationController::default();
 
     simulation_controller.start_simulation(
-        "../network-initializer/config/butterfly.toml",
+        "../network-initializer/config/star.toml",
         main_window.as_weak(),
     );
 
@@ -1203,9 +1203,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         );
     }
 
+    {
+        let sc = Arc::clone(&simulation_controller);
+
+        main_window.on_stop_simulation(
+            move || {
+                let mut sc = sc.lock().unwrap();
+                sc.stop_simulation();
+            },
+        );
+    }
+
     // Initial log
     utils::log("Simulation Controller started", Color::from_rgb_u8(123, 132, 150));
 
     main_window.run()?;
+
+    Ok(())
 
 }
