@@ -6,24 +6,42 @@ use std::fs::File;
 use std::io::Write;
 use std::sync::{Arc, RwLock};
 use once_cell::sync::OnceCell;
-use slint::{Image, SharedString, VecModel, Weak};
+use chrono::{Datelike, Local, Timelike};
+use slint::{Color, Image, SharedString, VecModel, Weak};
 use wg_internal::network::NodeId;
 use common::types::Message;
 use crate::{Client, Drone, Server, SimulationController};
-use crate::{ MainWindow };
+use crate::{ MainWindow, LogMessage };
 
-static LOGGER: OnceCell<Box<dyn Fn(SharedString) + Send + Sync + 'static>> = OnceCell::new();
+static LOGGER: OnceCell<Box<dyn Fn(LogMessage) + Send + Sync + 'static>> = OnceCell::new();
 
-// Register the logger callback (called from main.rs).
-pub fn set_logger(cb: Box<dyn Fn(SharedString) + Send + Sync + 'static>) {
+pub fn set_logger(cb: Box<dyn Fn(LogMessage) + Send + Sync + 'static>) {
     let _ = LOGGER.set(cb);
 }
 
-//TODO log events
-pub fn log<S: Into<SharedString>>(msg: S) {
+pub fn log<S: Into<SharedString>>(msg: S, color: Color) {
     if let Some(cb) = LOGGER.get() {
-        cb(msg.into());
+        let now = chrono::Local::now();
+        let formatted = format!(
+            "[{}/{}/{} {:02}:{:02}:{:02}] {}",
+            now.day(),
+            now.month(),
+            now.year(),
+            now.hour(),
+            now.minute(),
+            now.second(),
+            msg.into()
+        );
+
+        cb(LogMessage {
+            message: formatted.into(),
+            color,
+        });
     }
+}
+
+pub fn log_default<S: Into<SharedString>>(msg: S) {
+    log(msg, Color::from_rgb_u8(255, 255, 255));
 }
 
 /// Saves chat history into `chats_history_{notification_from}`.
@@ -55,15 +73,63 @@ pub fn save_chat_history(notification_from: &u8, history: &HashMap<NodeId, Vec<M
 
 pub fn handle_registered_clients(notification_from: &u8, list: &Vec<u8>, main_window: Weak<MainWindow>, nodes: (Vec<(NodeId, String)>, Vec<(NodeId, String)>)) -> () {
     if let Some(mw) = main_window.upgrade() {
+
         let (clients_nodes, servers_nodes) = nodes;
-        if clients_nodes.iter().any(|(node_id, _)| node_id == notification_from) {
-            let clients = Rc::new(VecModel::from(clients_nodes.iter().map(|(node_id, node_type)| Client { title: format!("Client {}. Can reach:  {:?}", node_id, list).into(), subtitle: node_type.into(), id: node_id.to_string().into(), kind: node_type.into() }).collect::<Vec<_>>()));
-            mw.set_clients(clients.into());
+
+        let mut clients = Vec::new();
+
+        for (node_id, node_type) in clients_nodes.iter() {
+
+            if node_id == notification_from {
+                clients.push(Client {
+                    id: node_id.to_string().into(),
+                    title: format!("Client {}", node_id).into(),
+                    subtitle: format!("{}", node_type).into(),
+                    kind: node_type.into()
+                });
+            } else {
+                clients.push(Client {
+                    id: node_id.to_string().into(),
+                    title: format!("Client {}", node_id).into(),
+                    subtitle: format!("{}", node_type).into(),
+                    kind: node_type.into()
+                });
+            }
         }
-        if servers_nodes.iter().any(|(node_id, _)| node_id == notification_from) {
-            let servers = Rc::new(VecModel::from(servers_nodes.iter().map(|(node_id, node_type)| Server { title: format!("Server {}. Subscribed: {:?}", node_id, list).into(), subtitle: node_type.into(), id: node_id.to_string().into(), kind: node_type.into() }).collect::<Vec<_>>()));
-            mw.set_servers(servers.into());
+
+        mw.set_clients(Rc::new(VecModel::from(clients)).into());
+
+        let mut servers = Vec::new();
+
+        for (node_id, node_type) in servers_nodes.iter() {
+
+            if node_id == notification_from {
+                servers.push(Server {
+                    id: node_id.to_string().into(),
+                    title: format!("Server {}", node_id).into(),
+                    subtitle: format!("{} | {:?}", node_type, list).into(),
+                    kind: node_type.into()
+                });
+            } else {
+                servers.push(Server {
+                    id: node_id.to_string().into(),
+                    title: format!("Server {}", node_id).into(),
+                    subtitle: format!("{}", node_type).into(),
+                    kind: node_type.into()
+                });
+            }
         }
+
+        mw.set_servers(Rc::new(VecModel::from(servers)).into());
+
+        // if clients_nodes.iter().any(|(node_id, _)| node_id == notification_from) {
+        //     let clients = Rc::new(VecModel::from(clients_nodes.iter().map(|(node_id, node_type)| Client { title: format!("Client {}. Can reach:  {:?}", node_id, list).into(), subtitle: node_type.into(), id: node_id.to_string().into(), kind: node_type.into() }).collect::<Vec<_>>()));
+        //     mw.set_clients(clients.into());
+        // }
+        // if servers_nodes.iter().any(|(node_id, _)| node_id == notification_from) {
+        //     let servers = Rc::new(VecModel::from(servers_nodes.iter().map(|(node_id, node_type)| Server { title: format!("Server {}. Subscribed: {:?}", node_id, list).into(), subtitle: node_type.into(), id: node_id.to_string().into(), kind: node_type.into() }).collect::<Vec<_>>()));
+        //     mw.set_servers(servers.into());
+        // }
     }
 }
 

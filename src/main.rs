@@ -26,7 +26,7 @@ use network_initializer::network_initializer::{NetworkInitializer, Running, Unin
 use wg_internal::controller::{DroneCommand, DroneEvent};
 use wg_internal::network::NodeId;
 
-use slint::{ComponentHandle, Image, Model, ModelRc, SharedString, SharedVector, VecModel, Weak, PhysicalSize};
+use slint::{Color, ComponentHandle, Image, Model, ModelRc, PhysicalSize, SharedString, SharedVector, VecModel, Weak};
 slint::include_modules!();
 
 
@@ -142,100 +142,100 @@ impl SimulationController {
                             notification_from,
                             files,
                         } => {
-                            utils::log(&format!("NOTIFICATION FROM: {notification_from}, CACHED FILES RECEIVED: {} files", files.len()));
+                            utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, CACHED FILES RECEIVED: {} files", files.len()));
                             file_conversion::save_files(notification_from, files);
                         },
                         WebEvent::File {
                             notification_from,
                             file,
                         } => {
-                            utils::log(&format!("NOTIFICATION FROM: {notification_from}, FILE RECEIVED: {}", file.id.to_string()));
+                            utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, FILE RECEIVED: {}", file.id.to_string()));
                             file_conversion::save_file(notification_from, file);
                         },
                         WebEvent::TextFiles {
                             notification_from,
                             files,
                         } => {
-                            utils::log(&format!("NOTIFICATION FROM: {notification_from}, TEXT FILES RECEIVED: {} files", files.len()));
+                            utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, TEXT FILES RECEIVED: {} files", files.len()));
                             file_conversion::save_text_files(notification_from, files);
                         },
                         WebEvent::TextFile {
                             notification_from,
                             file,
                         } => {
-                            utils::log(&format!("NOTIFICATION FROM: {notification_from}, TEXT FILE RECEIVED: {}", file.id.to_string()));
+                            utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, TEXT FILE RECEIVED: {}", file.id.to_string()));
                             file_conversion::save_text_file(notification_from, file);
                         },
                         WebEvent::MediaFiles {
                             notification_from,
                             files,
                         } => {
-                            utils::log(&format!("NOTIFICATION FROM: {notification_from}, MEDIA FILES RECEIVED: {} files", files.len()));
+                            utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, MEDIA FILES RECEIVED: {} files", files.len()));
                             file_conversion::save_media_files(notification_from, files);
                         },
                         WebEvent::MediaFile {
                             notification_from,
                             file,
                         } => {
-                            utils::log(&format!("NOTIFICATION FROM: {notification_from}, MEDIA FILE RECEIVED: {}", file.id.to_string()));
+                            utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, MEDIA FILE RECEIVED: {}", file.id.to_string()));
                             file_conversion::save_media_file(notification_from, file);
                         },
                         WebEvent::FilesListQueried {
                             notification_from,
                             from,
                         } => {
-                            utils::log(&format!("NOTIFICATION FROM: {notification_from}, FILES LIST QUERIED FROM: {from}"));
+                            utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, FILES LIST QUERIED FROM: {from}"));
                         },
                         WebEvent::FileNotFound {
                             notification_from,
                             uuid,
                         } => {
-                            utils::log(&format!("NOTIFICATION FROM: {notification_from}, FILE NOT FOUND: {uuid}"));
+                            utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, FILE NOT FOUND: {uuid}"));
                         },
                         WebEvent::TextFileAdded {
                             notification_from,
                             uuid,
                         } => {
-                            utils::log(&format!("NOTIFICATION FROM: {notification_from}, TEXT FILE ADDED: {uuid}"));
+                            utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, TEXT FILE ADDED: {uuid}"));
                         },
                         WebEvent::MediaFileAdded {
                             notification_from,
                             uuid,
                         } =>{
-                            utils::log(&format!("NOTIFICATION FROM: {notification_from}, MEDIA FILE ADDED: {uuid}"));
+                            utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, MEDIA FILE ADDED: {uuid}"));
                         },
                         
                         WebEvent::TextFileRemoved {
                             notification_from,
                             uuid,
                         } => {
-                            utils::log(&format!("NOTIFICATION FROM: {notification_from}, TEXT FILE REMOVED: {uuid}"));
+                            utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, TEXT FILE REMOVED: {uuid}"));
                         },
                         WebEvent::TextFileRemoved {
                             notification_from,
                             uuid,
                         } => {
-                            utils::log(&format!("NOTIFICATION FROM: {notification_from}, TEXT FILE REMOVED: {uuid}"));
+                            utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, TEXT FILE REMOVED: {uuid}"));
                         },
                         WebEvent::MediaFileRemoved {
                             notification_from,
                             uuid,
                         } => {
-                            utils::log(&format!("NOTIFICATION FROM: {notification_from}, MEDIA FILE REMOVED: {uuid}"));
+                            utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, MEDIA FILE REMOVED: {uuid}"));
                         },
                         
                         WebEvent::FileOperationError {
                             notification_from,
                             msg,
                         } => {
-                            utils::log(&format!("NOTIFICATION FROM: {notification_from}, FILE OPERATION ERROR: {msg}"));
+                            utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, FILE OPERATION ERROR: {msg}"));
                         },
                         WebEvent::FileRequested {
                             notification_from,
                             from,
                             uuid,
                         } => {
-                            utils::log(&format!("NOTIFICATION FROM: {notification_from}, FILE REQUESTED FROM: {from}, UUID: {uuid}"));
+                            utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, FILE REQUESTED FROM: {from}, UUID: {uuid}"));
                         },
 
                         WebEvent::BadUuid {
@@ -243,19 +243,19 @@ impl SimulationController {
                             from,
                             uuid,
                         } => {
-                            utils::log(&format!("NOTIFICATION FROM: {notification_from}, BAD UUID FROM: {from}, UUID: {uuid}"));
+                            utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, BAD UUID FROM: {from}, UUID: {uuid}"));
                         },
                         WebEvent::FileServed {
                             notification_from,
                             file,
                         } => {
-                            utils::log(&format!("NOTIFICATION FROM: {notification_from}, FILE SERVED: {file}"));
+                            utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, FILE SERVED: {file}"));
                         },
                         WebEvent::FilesLists { 
                             notification_from, 
                             files_map 
                         } => {
-                            utils::log(&format!("NOTIFICATION FROM: {notification_from}, FILE LISTS"));
+                            utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, FILE LISTS"));
                         }
                     
                     }
@@ -265,7 +265,7 @@ impl SimulationController {
                             notification_from,
                             history,
                         } => {
-                            utils::log(&format!("NOTIFICATION FROM: {notification_from}, CHAT HISTORY RECEIVED"));
+                            utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, CHAT HISTORY RECEIVED"));
                             utils::save_chat_history(notification_from, history);
                         },
                         ChatEvent::RegisteredClients {
@@ -278,55 +278,55 @@ impl SimulationController {
                         ChatEvent::MessageSent {
                             notification_from,
                             to,
-                        } => utils::log(&format!("NOTIFICATION FROM: {notification_from}, MESSAGE SENT TO: {to}")),
+                        } => utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, MESSAGE SENT TO: {to}")),
                         ChatEvent::MessageReceived {
                             notification_from,
                             msg,
-                        } => utils::log(&format!("NOTIFICATION FROM: {notification_from}, RECEIVED MESSAGE {:?}", msg)),
+                        } => utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, RECEIVED MESSAGE {:?}", msg)),
                         ChatEvent::ClientRegistered {
                             client,
                             server
-                        } => utils::log(&format!("NOTIFICATION FROM: {server}, REGISTERED CLIENT {client}")),
+                        } => utils::log_default(&format!("NOTIFICATION FROM: {server}, REGISTERED CLIENT {client}")),
                         ChatEvent::ClientListQueried {
                             notification_from,
                             from,
-                        } => utils::log(&format!("NOTIFICATION FROM: {notification_from}, CLIENT LIST QUERIED BY {from}")),
+                        } => utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, CLIENT LIST QUERIED BY {from}")),
                         ChatEvent::ClientNotInList {
                             notification_from,
                             id,
-                        } => utils::log(&format!("NOTIFICATION FROM: {notification_from}, CLIENT {id} NOT IN REGISTERED CLIENTS")),
+                        } => utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, CLIENT {id} NOT IN REGISTERED CLIENTS")),
                         ChatEvent::ErrorClientNotFound {
                             notification_from,
                             not_found,
-                        } => utils::log(&format!("NOTIFICATION FROM: {notification_from}, CLIENT {not_found} IS NOT REGISTERED IN SERVER")),
+                        } => utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, CLIENT {not_found} IS NOT REGISTERED IN SERVER")),
                         ChatEvent::RegistrationSucceeded {
                             notification_from,
                             to,
-                        } => utils::log(&format!("NOTIFICATION FROM: {notification_from}, SUCCESSFULLY REGISTERED TO SERVER {to}")),
+                        } => utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, SUCCESSFULLY REGISTERED TO SERVER {to}")),
                     }
                 } else if let Some(event) = event.downcast_ref::<NodeEvent>() {
                     match event {
                         NodeEvent::PacketSent(packet) => {
-                            utils::log(&format!("PACKET SENT: {}", packet));
+                            utils::log(&format!("PACKET SENT: {}", packet), Color::from_rgb_u8( 123, 132, 150));
                         },
                         NodeEvent::FloodStarted(flood_counter,node_id) => {
-                            utils::log(&format!("NOTIFICATION FROM: {}, FLOOD STARTED {} FLOOD", node_id, flood_counter));
+                            utils::log_default(&format!("NOTIFICATION FROM: {}, FLOOD STARTED {} FLOOD", node_id, flood_counter));
                         },
                         NodeEvent::NodeRemoved(node_id) => {
-                            utils::log(&format!("REMOVED {} NODE", node_id));
+                            utils::log_default(&format!("REMOVED {} NODE", node_id));
                         },
                         NodeEvent::MessageReceived {
                             notification_from,
                             from,
-                        } => utils::log(&format!("NOTIFICATION FROM: {notification_from}, MESSAGE RECEIVED FROM: {from}")),
+                        } => utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, MESSAGE RECEIVED FROM: {from}")),
                         NodeEvent::MessageSent {
                             notification_from,
                             to,
-                        } => utils::log(&format!("NOTIFICATION FROM: {notification_from}, MESSAGE SENT TO: {to}")),
+                        } => utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, MESSAGE SENT TO: {to}")),
                         NodeEvent::ServerTypeQueried {
                             notification_from,
                             from,
-                        } => utils::log(&format!("NOTIFICATION FROM: {notification_from}, SERVER TYPE QUERIED FROM: {from}")),
+                        } => utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, SERVER TYPE QUERIED FROM: {from}")),
                     }
                 }
             }
@@ -411,42 +411,35 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     main_window.set_servers(servers.clone().into());
 
     // Log
-    let logs_model: Rc<VecModel<SharedString>> =Rc::new(VecModel::from(Vec::<SharedString>::new()));
+    let logs_model: Rc<VecModel<LogMessage>> = Rc::new(VecModel::from(Vec::<LogMessage>::new()));
     main_window.set_logs(logs_model.clone().into());
 
     {
         let logs_model = logs_model.clone();
-        main_window.on_add_log(move |line: SharedString| {
-            logs_model.push(line);
+        main_window.on_add_log(move |entry: LogMessage| {
+            logs_model.push(entry);
         });
     }
 
     {
         let mw_weak = main_window.as_weak();
-        utils::set_logger(Box::new(move |msg: SharedString| {
-            let _ = slint::invoke_from_event_loop({
-                let mw_weak = mw_weak.clone();
-                move || {
-                    if let Some(mw) = mw_weak.upgrade() {
-                        let now = Local::now();
-                        // Example format: [22/08/2025 14:35:12] message
-                        let formatted = format!(
-                            "[{}/{}/{} {:02}:{:02}:{:02}] {}",
-                            now.day(),
-                            now.month(),
-                            now.year(),
-                            now.hour(),
-                            now.minute(),
-                            now.second(),
-                            msg
-                        );
-                        mw.invoke_add_log(formatted.into());
-                    }
+        utils::set_logger(Box::new(move |entry: LogMessage| {
+            let mw_weak = mw_weak.clone();
+            let _ = slint::invoke_from_event_loop(move || {
+                if let Some(mw) = mw_weak.upgrade() {
+                    mw.invoke_add_log(entry);
                 }
             });
         }));
     }
-    
+
+    {
+        let logs_model = logs_model.clone();
+        main_window.on_clear_logs(move || {
+            logs_model.clear();
+        });
+    }
+
     let simulation_controller = Arc::new(simulation_controller);
     let sc_add_sender = Arc::clone(&simulation_controller);
     let sc_remove_sender = Arc::clone(&simulation_controller);
@@ -1335,7 +1328,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 
     // Initial log
-    utils::log("Simulation Controller started");
+    utils::log("Simulation Controller started", Color::from_rgb_u8(123, 132, 150));
 
     main_window.run()?;
     

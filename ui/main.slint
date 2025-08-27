@@ -39,6 +39,11 @@ export struct Server {
     kind: string
 }
 
+export struct LogMessage {
+    message: string,
+    color: color
+}
+
 export component MainWindow inherits Window {
 
     in property <[Drone]> drones;
@@ -47,13 +52,14 @@ export component MainWindow inherits Window {
 
     in property <image> graph_image: @image-url("../assets/images/placeholder.png");
 
-    in property <[string]> logs;
+    in property <[LogMessage]> logs;
 
     in property <[Position]> nodes;
     in property <[Edge]> edges;
 
-    callback add_log(input: string);
-    
+    callback add_log(input: LogMessage);
+    callback clear_logs();
+
     callback menu_clicked(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string);
 
     callback add_sender(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: AddSender);
@@ -557,40 +563,85 @@ export component MainWindow inherits Window {
 
             //? Commands column
             Rectangle {
-                horizontal-stretch: 1;
+                width: 320px;
                 vertical-stretch: 1;
                 background: Palette.bg;
                 clip: true;
 
-                Flickable {
-                    width: parent.width;
-                    height: parent.height;
+                VerticalLayout {
                 
-                    VerticalLayout {
-                        width: parent.width;
+                    padding: 16px;
 
-                        padding: 16px;
+                    HorizontalLayout {
+
+                        height: 48px;
                         spacing: 8px;
 
-                        alignment: start;
-                        
                         Text {
                             text: "LOGS";
                             color: Palette.grey;
                             font-size: 16px;
                             font-weight: 800;
+                            
+                            vertical-alignment: center;
                         }
 
-                        Rectangle { height: 4px; }
+                        Rectangle {
+                            background: add_separator.has-hover ? Palette.bg_highlight : Palette.bg_alt;
 
-                        for log[i] in logs : Text {
-                            text: log;
-                            wrap: word-wrap;
+                            Text {
+                                text: "Add Separator";
+                                font-size: 16px;
+                            }
+
+                            add_separator := TouchArea {
+                                clicked => {
+
+                                    root.add_log({
+                                        message: "---------------------------------------------------------",
+                                        color: #0174CF,
+                                    });
+
+                                }
+                            }
                         }
-                        
+
+                        Rectangle {
+                            background: clear.has-hover ? Palette.bg_highlight : Palette.bg_alt;
+
+                            Text {
+                                text: "Clear";
+                                font-size: 16px;
+                            }
+
+                            clear := TouchArea {
+                                clicked => {
+                                    clear_logs();
+                                }
+                            }
+                        }
                     }
-                }
-                
+
+                    Rectangle { height: 20px; }
+
+                    Flickable {
+
+                        logs_view := VerticalLayout {
+                            width: parent.width;
+
+                            spacing: 8px;
+
+                            alignment: start;
+
+                            for log[i] in logs : Text {
+                                text: log.message;
+                                color: log.color;
+                                wrap: word-wrap;
+                            }
+                            
+                        }
+                    }
+            }
             }
         }
     }
