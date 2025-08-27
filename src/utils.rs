@@ -76,29 +76,6 @@ pub fn handle_registered_clients(notification_from: &u8, list: &Vec<u8>, main_wi
 
         let (clients_nodes, servers_nodes) = nodes;
 
-        let mut clients = Vec::new();
-
-        for (node_id, node_type) in clients_nodes.iter() {
-
-            if node_id == notification_from {
-                clients.push(Client {
-                    id: node_id.to_string().into(),
-                    title: format!("Client {}", node_id).into(),
-                    subtitle: format!("{}", node_type).into(),
-                    kind: node_type.into()
-                });
-            } else {
-                clients.push(Client {
-                    id: node_id.to_string().into(),
-                    title: format!("Client {}", node_id).into(),
-                    subtitle: format!("{}", node_type).into(),
-                    kind: node_type.into()
-                });
-            }
-        }
-
-        mw.set_clients(Rc::new(VecModel::from(clients)).into());
-
         let mut servers = Vec::new();
 
         for (node_id, node_type) in servers_nodes.iter() {
@@ -121,6 +98,19 @@ pub fn handle_registered_clients(notification_from: &u8, list: &Vec<u8>, main_wi
         }
 
         mw.set_servers(Rc::new(VecModel::from(servers)).into());
+
+        let mut clients = Vec::new();
+
+        for (node_id, node_type) in clients_nodes.iter() {
+            clients.push(Client {
+                id: node_id.to_string().into(),
+                title: format!("Client {}", node_id).into(),
+                subtitle: format!("{}", node_type).into(),
+                kind: node_type.into()
+            });
+        }
+
+        mw.set_clients(Rc::new(VecModel::from(clients)).into());
 
         // if clients_nodes.iter().any(|(node_id, _)| node_id == notification_from) {
         //     let clients = Rc::new(VecModel::from(clients_nodes.iter().map(|(node_id, node_type)| Client { title: format!("Client {}. Can reach:  {:?}", node_id, list).into(), subtitle: node_type.into(), id: node_id.to_string().into(), kind: node_type.into() }).collect::<Vec<_>>()));
