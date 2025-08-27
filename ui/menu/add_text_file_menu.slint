@@ -17,7 +17,7 @@ export component AddTextFileMenu {
     callback on_ok(node_command: SimulationControllerCommand, node_type: SimulationControllerType, node_id: string, args: AddTextFile);
 
     width: 1280px;
-    height: 720px;
+    height: 800px;
 
     init => {
         self.visible = false;
@@ -36,7 +36,7 @@ export component AddTextFileMenu {
     Rectangle {
 
         width: 480px;
-        height: 216px;
+        height: 250px;
 
         background: Palette.bg;
 
@@ -73,10 +73,11 @@ export component AddTextFileMenu {
             }
 
             Text {
-                text: "Add Text File";
+                text: "Insert the title, content and media references of the text file you want to add.";
                 font-size: 16px;
                 vertical-alignment: center;
                 horizontal-alignment: center;
+                wrap: word-wrap;
             }
 
             HorizontalLayout {
@@ -96,6 +97,14 @@ export component AddTextFileMenu {
                         horizontal-alignment: center;
                         vertical-alignment: center;
                     }
+
+                    Text {
+                        text: title.has-focus || !title.text.is-empty ? "" : "Title" ;
+                        color: Palette.bg_highlight;
+                        font-size: 16px;
+                        vertical-alignment: center;
+                        horizontal-alignment: center;
+                    }
                 }
 
                 Rectangle {
@@ -110,6 +119,14 @@ export component AddTextFileMenu {
 
                         horizontal-alignment: center;
                         vertical-alignment: center;
+                    }
+
+                    Text {
+                        text: content.has-focus || !content.text.is-empty ? "" : "Content" ;
+                        color: Palette.bg_highlight;
+                        font-size: 16px;
+                        vertical-alignment: center;
+                        horizontal-alignment: center;
                     }
                 }
 
@@ -155,13 +172,21 @@ export component AddTextFileMenu {
                     horizontal-alignment: center;
                     vertical-alignment: center;
                 }
+
+                Text {
+                    text: media_refs.has-focus || !media_refs.text.is-empty ? "" : "Media References" ;
+                    color: Palette.bg_highlight;
+                    font-size: 16px;
+                    vertical-alignment: center;
+                    horizontal-alignment: center;
+                }
             }
         }
     }
 
     callback grab_focus();
-    grab_focus => {
-        title.focus();
-        title.set-selection-offsets(title.text.character-count, title.text.character-count);
-    }
+    // grab_focus => {
+    //     title.focus();
+    //     title.set-selection-offsets(title.text.character-count, title.text.character-count);
+    // }
 }

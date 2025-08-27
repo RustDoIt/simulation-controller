@@ -96,6 +96,14 @@ export component RemoveTextFileMenu {
                         horizontal-alignment: center;
                         vertical-alignment: center;
                     }
+
+                    Text {
+                        text: uuid.has-focus || !uuid.text.is-empty ? "" : "UUID" ;
+                        color: Palette.bg_highlight;
+                        font-size: 16px;
+                        vertical-alignment: center;
+                        horizontal-alignment: center;
+                    }
                 }
 
                 Rectangle {
@@ -126,8 +134,8 @@ export component RemoveTextFileMenu {
     }
 
     callback grab_focus();
-    grab_focus => {
-        uuid.focus();
-        uuid.set-selection-offsets(uuid.text.character-count, uuid.text.character-count);
-    }
+    // grab_focus => {
+    //     uuid.focus();
+    //     uuid.set-selection-offsets(uuid.text.character-count, uuid.text.character-count);
+    // }
 }

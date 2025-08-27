@@ -72,7 +72,7 @@ export component GetMediaFileMenu {
             }
 
             Text {
-                text: "Enter the media UUID in the first input box, and the location in the second.";
+                text: "Enter the media UUID and the location.";
                 font-size: 16px;
                 vertical-alignment: center;
                 horizontal-alignment: center;
@@ -97,6 +97,14 @@ export component GetMediaFileMenu {
                         horizontal-alignment: center;
                         vertical-alignment: center;
                     }
+
+                    Text {
+                        text: media_id.has-focus || !media_id.text.is-empty ? "" : "UUID" ;
+                        color: Palette.bg_highlight;
+                        font-size: 16px;
+                        vertical-alignment: center;
+                        horizontal-alignment: center;
+                    }
                 }
 
                 Rectangle {
@@ -111,6 +119,14 @@ export component GetMediaFileMenu {
 
                         horizontal-alignment: center;
                         vertical-alignment: center;
+                    }
+
+                    Text {
+                        text: location.has-focus || !location.text.is-empty ? "" : "Location" ;
+                        color: Palette.bg_highlight;
+                        font-size: 16px;
+                        vertical-alignment: center;
+                        horizontal-alignment: center;
                     }
                 }
 
@@ -142,8 +158,8 @@ export component GetMediaFileMenu {
     }
 
     callback grab_focus();
-    grab_focus => {
-        media_id.focus();
-        media_id.set-selection-offsets(media_id.text.character-count, media_id.text.character-count);
-    }
+    // grab_focus => {
+    //     media_id.focus();
+    //     media_id.set-selection-offsets(media_id.text.character-count, media_id.text.character-count);
+    // }
 }

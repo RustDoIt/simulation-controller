@@ -802,7 +802,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         );
     }
 
-
     {
         let sc = Arc::clone(&simulation_controller);
         main_window.on_get_cached_files(
@@ -830,7 +829,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             },
         );
     }
-
 
     {
         let sc = Arc::clone(&simulation_controller);

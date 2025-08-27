@@ -96,6 +96,14 @@ export component AddMediaFileFromPathMenu {
                         horizontal-alignment: center;
                         vertical-alignment: center;
                     }
+
+                    Text {
+                        text: file_path.has-focus || !file_path.text.is-empty ? "" : "File Path" ;
+                        color: Palette.bg_highlight;
+                        font-size: 16px;
+                        vertical-alignment: center;
+                        horizontal-alignment: center;
+                    }
                 }
 
                 Rectangle {
@@ -126,8 +134,8 @@ export component AddMediaFileFromPathMenu {
     }
 
     callback grab_focus();
-    grab_focus => {
-        file_path.focus();
-        file_path.set-selection-offsets(file_path.text.character-count, file_path.text.character-count);
-    }
+    // grab_focus => {
+    //     file_path.focus();
+    //     file_path.set-selection-offsets(file_path.text.character-count, file_path.text.character-count);
+    // }
 }

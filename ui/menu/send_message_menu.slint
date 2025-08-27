@@ -73,7 +73,7 @@ export component SendMessageMenu {
             }
 
             Text {
-                text: "Enter the destination Node ID in the first input box, and the message to be sent in the second.";
+                text: "Enter the destination Node ID and the message to be sent.";
                 font-size: 16px;
                 vertical-alignment: center;
                 horizontal-alignment: center;
@@ -100,6 +100,14 @@ export component SendMessageMenu {
 
                         input-type: number;
                     }
+
+                    Text {
+                        text: node_id2.has-focus || !node_id2.text.is-empty ? "" : "Node ID" ;
+                        color: Palette.bg_highlight;
+                        font-size: 16px;
+                        vertical-alignment: center;
+                        horizontal-alignment: center;
+                    }
                 }
 
                 Rectangle {
@@ -114,6 +122,14 @@ export component SendMessageMenu {
 
                         horizontal-alignment: center;
                         vertical-alignment: center;
+                    }
+
+                    Text {
+                        text: message.has-focus || !message.text.is-empty ? "" : "Meessage" ;
+                        color: Palette.bg_highlight;
+                        font-size: 16px;
+                        vertical-alignment: center;
+                        horizontal-alignment: center;
                     }
                 }
 
@@ -145,8 +161,8 @@ export component SendMessageMenu {
     }
 
     callback grab_focus();
-    grab_focus => {
-        node_id2.focus();
-        node_id2.set-selection-offsets(node_id2.text.character-count, node_id2.text.character-count);
-    }
+    // grab_focus => {
+    //     node_id2.focus();
+    //     node_id2.set-selection-offsets(node_id2.text.character-count, node_id2.text.character-count);
+    // }
 }
