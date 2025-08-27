@@ -877,15 +877,12 @@ dependencies = [
 [[package]]
 name = "client"
 version = "0.1.0"
+source = "git+https://github.com/RustDoIt/client.git#49306e68f92ea3cf5931ba28c8ff41e482f09984"
 dependencies = [
- "anyhow",
- "common 0.1.0",
+ "common 0.1.0 (git+https://github.com/RustDoIt/common.git)",
  "crossbeam",
  "crossbeam-channel",
- "log",
- "serde",
  "serde_json",
- "tokio",
  "uuid",
  "wg_internal",
 ]
@@ -956,19 +953,6 @@ dependencies = [
 [[package]]
 name = "common"
 version = "0.1.0"
-dependencies = [
- "anyhow",
- "crossbeam-channel",
- "serde",
- "tempfile",
- "tokio",
- "uuid",
- "wg_internal",
-]
-
-[[package]]
-name = "common"
-version = "0.1.0"
 source = "git+https://github.com/Cpp-enjoyers/common.git#18ac83d8245b9c14d467a50eea9d1332f4fe6821"
 dependencies = [
  "bincode 2.0.0",
@@ -977,6 +961,19 @@ dependencies = [
  "rand 0.8.5",
  "serde",
  "wg_2024",
+]
+
+[[package]]
+name = "common"
+version = "0.1.0"
+source = "git+https://github.com/RustDoIt/common.git#6c3ef646b6834a5f23d84640da2f7f677e94b965"
+dependencies = [
+ "anyhow",
+ "crossbeam-channel",
+ "serde",
+ "tempfile",
+ "uuid",
+ "wg_internal",
 ]
 
 [[package]]
@@ -1275,16 +1272,6 @@ name = "ctor-lite"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f791803201ab277ace03903de1594460708d2d54df6053f2d9e82f592b19e3b"
-
-[[package]]
-name = "ctrlc"
-version = "3.4.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46f93780a459b7d656ef7f071fe699c4d3d2cb201c4b24d085b6ddc505276e73"
-dependencies = [
- "nix",
- "windows-sys 0.59.0",
-]
 
 [[package]]
 name = "cursor-icon"
@@ -3252,10 +3239,11 @@ dependencies = [
 [[package]]
 name = "network-initializer"
 version = "0.1.0"
+source = "git+https://github.com/RustDoIt/network-initializer.git#f1340610231acd5bd08bbb9b6fd59197223f6add"
 dependencies = [
  "ap2024_unitn_cppenjoyers_drone",
  "client",
- "common 0.1.0",
+ "common 0.1.0 (git+https://github.com/RustDoIt/common.git)",
  "crossbeam",
  "d-r-o-n-e_drone",
  "dr_ones",
@@ -4601,9 +4589,10 @@ dependencies = [
 [[package]]
 name = "server"
 version = "0.1.0"
+source = "git+https://github.com/RustDoIt/server.git#f833c4613abede2d6d40dd4df995b8d11bf44c91"
 dependencies = [
  "bincode 1.3.3",
- "common 0.1.0",
+ "common 0.1.0 (git+https://github.com/RustDoIt/common.git)",
  "crossbeam",
  "log",
  "serde",
@@ -4667,13 +4656,11 @@ name = "simulation_controller"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "common 0.1.0",
+ "common 0.1.0 (git+https://github.com/RustDoIt/common.git)",
  "crossbeam",
- "ctrlc",
  "network-initializer",
  "once_cell",
  "regex",
- "serde_json",
  "slint",
  "slint-build",
  "uuid",

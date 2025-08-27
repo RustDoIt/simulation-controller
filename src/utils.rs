@@ -166,66 +166,62 @@ pub fn handle_registered_clients(notification_from: &u8, list: &Vec<u8>, main_wi
     }
 }
 
-pub fn validate_node_id(input: &str) -> bool {
+pub fn remove_node(node_id: NodeId, sc: &mut SimulationController) {
 
-    // Try to parse as a number
-    if let Ok(val) = input.parse::<isize>() {
+    sc.network_view.nodes.retain(|n| n.get_id() != node_id);
 
-        //TODO check if node exists
-
-        //TODO add sender
-
-        return true;
+    for n in sc.network_view.nodes.iter_mut() {
+        n.remove_adjacent(node_id);
     }
 
-    return false;
+    sc.clients.retain(|id, _| id != &node_id);
+    sc.servers.retain(|id, _| id != &node_id);
+    sc.drones.retain(|id, _| id != &node_id);
 }
 
-pub fn validate_pdr(input: &str, current: &str) {
+pub fn remove_edge(node_id: NodeId, args_node_id: NodeId, sc: &mut SimulationController) {
 
-    // Try to parse as a number
-    if let Ok(val) = input.parse::<f64>() {
+    for n in sc.network_view.nodes.iter_mut() {
 
-        // Range check
-        if val >= 0.0 && val <= 100.0 {
+        if n.get_id() == node_id {
+            n.remove_adjacent(args_node_id);
+        }
+        else if n.get_id() == args_node_id {
+            n.remove_adjacent(node_id);
+        }
+    }
 
-            // If different from current
-            if input != current {
+}
 
-                //TODO set PDR
-            }
+pub fn add_edge(node_id: NodeId, args_node_id: NodeId, sc: &mut SimulationController) {
 
+    for n in sc.network_view.nodes.iter_mut() {
+
+        if n.get_id() == node_id {
+            n.add_adjacent(args_node_id);
+        } 
+        else if n.get_id() == args_node_id {
+            n.add_adjacent(node_id);
         }
     }
 }
 
-pub fn remove_node(input: &str) -> () {
+pub fn draw_menu(main_window: &MainWindow, sc: &SimulationController) {
 
-    // Try to parse as a number
-    if let Ok(val) = input.parse::<isize>() {
+    // Drones
+    let mut drones = sc.get_drones_pdr();
+    let drones = Rc::new(VecModel::from(drones.iter().map(|(id, pdr)| Drone { title: format!("Drone {id}").into(), id: id.to_string().into(), pdr: format!("{:.2}", pdr * 100.0).trim_end_matches('0').trim_end_matches('.').to_string().into() }).collect::<Vec<_>>()));
 
-        //TODO check if node exists
+    main_window.set_drones(drones.clone().into());
 
-        //TODO remove node
-    }
-} 
+    // Clients & Servers
+    let (clients, servers) = sc.get_nodes_with_type();
 
-pub fn crash_node(input: &str) -> () {
+    // Clients    
+    let clients = Rc::new(VecModel::from(clients.iter().map(|(node_id, node_type)| Client { title: format!("Client {node_id}").into(), subtitle: node_type.into(), id: node_id.to_string().into(), kind: node_type.into() }).collect::<Vec<_>>()));
+    main_window.set_clients(clients.clone().into());
 
-    // Try to parse as a number
-    if let Ok(val) = input.parse::<isize>() {
-
-        //TODO check if node exists
-
-        //TODO crash node
-    }
-} 
-
-pub fn update_graph(
-    drones: Rc<VecModel<Drone>>,
-    clients: Rc<VecModel<Client>>,
-    servers: Rc<VecModel<Server>>) -> Image {
-    
-    //TODO replace this with the actual graph
-    Image::load_from_path(Path::new("assets/images/placeholder.png")).unwrap_or_default()
+    // Servers
+    let servers = Rc::new(VecModel::from(servers.iter().map(|(node_id, node_type)| Server { title: format!("Server {node_id}").into(), subtitle: node_type.into(), id: node_id.to_string().into(), kind: node_type.into() }).collect::<Vec<_>>()));
+    main_window.set_servers(servers.clone().into());
 }

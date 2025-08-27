@@ -96,6 +96,14 @@ export component SetPacketDropRateMenu {
 
                         input-type: number;
                     }
+
+                    Text {
+                        text: pdr.has-focus || !pdr.text.is-empty ? "" : "PDR" ;
+                        color: Palette.bg_highlight;
+                        font-size: 16px;
+                        vertical-alignment: center;
+                        horizontal-alignment: center;
+                    }
                 }
 
                 Rectangle {
@@ -126,8 +134,8 @@ export component SetPacketDropRateMenu {
     }
 
     callback grab_focus();
-    grab_focus => {
-        pdr.focus();
-        pdr.set-selection-offsets(pdr.text.character-count, pdr.text.character-count);
-    }
+    // grab_focus => {
+    //     pdr.focus();
+    //     pdr.set-selection-offsets(pdr.text.character-count, pdr.text.character-count);
+    // }
 }

@@ -96,6 +96,14 @@ export component AddSenderMenu {
 
                         input-type: number;
                     }
+
+                    Text {
+                        text: node_id2.has-focus || !node_id2.text.is-empty ? "" : "Node ID" ;
+                        color: Palette.bg_highlight;
+                        font-size: 16px;
+                        vertical-alignment: center;
+                        horizontal-alignment: center;
+                    }
                 }
 
                 Rectangle {
@@ -126,8 +134,8 @@ export component AddSenderMenu {
     }
 
     callback grab_focus();
-    grab_focus => {
-        node_id2.focus();
-        node_id2.set-selection-offsets(node_id2.text.character-count, node_id2.text.character-count);
-    }
+    // grab_focus => {
+    //     node_id2.focus();
+    //     node_id2.set-selection-offsets(node_id2.text.character-count, node_id2.text.character-count);
+    // }
 }
