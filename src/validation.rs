@@ -54,6 +54,18 @@ pub fn can_remove_sender_drone(network_graph: &HashMap<(NodeId, String), HashSet
     }
 }
 
+// when the client wants to elminate a drone
+pub fn can_remove_sender_client(network_graph: &HashMap<(NodeId, String), HashSet<NodeId>>, client_id: NodeId, sender_id: NodeId, clients: &HashMap<NodeId, (NodeType, Sender<Box<dyn Command>>)>) -> bool {
+    if let Some(h) = network_graph.get(&(client_id, "client".to_string())) {
+        if h.contains(&sender_id) {
+            return h.len() > 1; // if the sender(drone) is in the client, we can remove it only if there are more than 1 drones
+        }
+        return false; // if the sender is not in the client, we cannot remove it
+    }
+    false // cannot find the client
+}
+
+//when the server wants to elminate a drone
 pub fn can_remove_sender_server(network_graph: &HashMap<(NodeId, String), HashSet<NodeId>>, server_id: NodeId, sender_id: NodeId, servers: &HashMap<NodeId, (NodeType, Sender<Box<dyn Command>>)>) -> bool {
     if let Some(h) = network_graph.get(&(server_id, "server".to_string())) {
         if h.contains(&sender_id) {

@@ -611,6 +611,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         sender1.send(DroneCommand::RemoveSender(args_node_id));
                     }
                     SimulationControllerType::ChatClient | SimulationControllerType::WebBrowser => {
+                        if !validation::can_remove_sender_client(&generic_graph, node_id, args_node_id, &sc.clients) {
+                            utils::log(&format!("Cannot remove sender {args_node_id} from client {node_id}: this client is attached to only 1 drone"), Color::from_rgb_u8(255, 94, 160));
+                            return;
+                        }
                         let sender1 = &sc.clients.get(&node_id).unwrap().1;
                         sender1.send(Box::new(NodeCommand::RemoveSender(args_node_id.clone())));
                     }
