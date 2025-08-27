@@ -29,15 +29,18 @@ export struct Client {
     title: string,
     subtitle: string,
     id: string,
+    kind: string,
 }
 
 export struct Server {
     title: string,
     subtitle: string,
     id: string,
+    kind: string
 }
 
 export component MainWindow inherits Window {
+
     in property <[Drone]> drones;
     in property <[Client]> clients;
     in property <[Server]> servers;
@@ -81,7 +84,12 @@ export component MainWindow inherits Window {
 
     width: 1280px;
     height: 720px;
+
+    title: "Rust Do It";
+    icon: @image-url("../assets/images/icons/icon.png");
+    
     default-font-family: "Satoshi";
+
     background: Palette.bg_alt;
 
     VerticalLayout {
@@ -143,7 +151,7 @@ export component MainWindow inherits Window {
                         for drone[i] in drones : DroneButton {
                             title: drone.title;
                             subtitle: "PDR " + drone.pdr + "%";
-
+                            
                             node_id: drone.id;
 
                             item_clicked(node_command, node_type, node_id) => {
@@ -269,7 +277,7 @@ export component MainWindow inherits Window {
                         for client[i] in clients : ClientButton {
                             title: client.title;
                             subtitle: client.subtitle;
-
+                            kind: client.kind;
                             node_id: client.id;
 
                             item_clicked(node_command, node_type, node_id) => {
@@ -395,7 +403,7 @@ export component MainWindow inherits Window {
                         for server[i] in servers : ServerButton {
                             title: server.title;
                             subtitle: server.subtitle;
-
+                            kind: server.kind;
                             node_id: server.id;
 
                             item_clicked(node_command, node_type, node_id) => {
@@ -577,6 +585,7 @@ export component MainWindow inherits Window {
 
                         for log[i] in logs : Text {
                             text: log;
+                            wrap: word-wrap;
                         }
                         
                     }

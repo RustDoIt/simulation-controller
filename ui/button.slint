@@ -208,6 +208,8 @@ export component DroneButton inherits Button {
 export component ClientButton inherits Button {
     stripe_color: Palette.green;
 
+    in-out property <string> kind;
+
     property <[Item]> chat_items: [
         {label: "Add Sender", node_command: SimulationControllerCommand.AddSender},
         {label: "Remove Sender", node_command: SimulationControllerCommand.RemoveSender},
@@ -238,12 +240,14 @@ export component ClientButton inherits Button {
         {label: "Get Text Files List", node_command: SimulationControllerCommand.GetTextFilesList},
     ];
 
-    items: self.subtitle == "Chat-Client" ? chat_items : web_items;
-    node_type: self.subtitle == "Chat-Client" ? SimulationControllerType.ChatClient : SimulationControllerType.WebBrowser;
+    items: kind == "Chat-Client" ? chat_items : web_items;
+    node_type: kind == "Chat-Client" ? SimulationControllerType.ChatClient : SimulationControllerType.WebBrowser;
 }
 
 export component ServerButton inherits Button {
     stripe_color: Palette.purple;
+
+    in-out property <string> kind;
 
     property <[Item]> chat_items: [
         {label: "Add Sender", node_command: SimulationControllerCommand.AddSender},
@@ -275,6 +279,6 @@ export component ServerButton inherits Button {
         // {label: "Get Text Files List", node_command: SimulationControllerCommand.GetTextFilesList},
     ];
 
-    items: self.subtitle == "Chat-Server" ? chat_items : web_items;
-    node_type: self.subtitle == "Chat-Server" ? SimulationControllerType.ChatServer : SimulationControllerType.WebServer;
+    items: kind == "Chat-Server" ? chat_items : web_items;
+    node_type: kind == "Chat-Server" ? SimulationControllerType.ChatServer : SimulationControllerType.WebServer;
 }

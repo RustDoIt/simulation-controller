@@ -297,9 +297,8 @@ impl SimulationController {
                         } => utils::log(&format!("NOTIFICATION FROM: {notification_from}, CLIENT {id} NOT IN REGISTERED CLIENTS")),
                         ChatEvent::ErrorClientNotFound {
                             notification_from,
-                            location,
                             not_found,
-                        } => utils::log(&format!("NOTIFICATION FROM: {notification_from}, CLIENT {not_found} IS NOT REGISTERED IN SERVER {location}")),
+                        } => utils::log(&format!("NOTIFICATION FROM: {notification_from}, CLIENT {not_found} IS NOT REGISTERED IN SERVER")),
                         ChatEvent::RegistrationSucceeded {
                             notification_from,
                             to,
@@ -400,12 +399,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Clients & Servers
     let (clients, servers) = simulation_controller.get_nodes_with_type();
 
+    println!("{:?}", clients);
+    println!("{:?}", servers);
+
     // Clients    
-    let clients = Rc::new(VecModel::from(clients.iter().map(|(node_id, node_type)| Client { title: format!("Client {node_id}").into(), subtitle: node_type.into(), id: node_id.to_string().into() }).collect::<Vec<_>>()));
+    let clients = Rc::new(VecModel::from(clients.iter().map(|(node_id, node_type)| Client { title: format!("Client {node_id}").into(), subtitle: node_type.into(), id: node_id.to_string().into(), kind: node_type.into() }).collect::<Vec<_>>()));
     main_window.set_clients(clients.clone().into());
 
     // Servers
-    let servers = Rc::new(VecModel::from(servers.iter().map(|(node_id, _)| Server { title: format!("Server {node_id}").into(), subtitle: "".into(), id: node_id.to_string().into() }).collect::<Vec<_>>()));
+    let servers = Rc::new(VecModel::from(servers.iter().map(|(node_id, node_type)| Server { title: format!("Server {node_id}").into(), subtitle: node_type.into(), id: node_id.to_string().into(), kind: node_type.into() }).collect::<Vec<_>>()));
     main_window.set_servers(servers.clone().into());
 
     // Log
