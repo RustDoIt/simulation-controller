@@ -351,13 +351,13 @@ impl SimulationController {
                     if packet.routing_header.len() > 0 {
                         if packet.routing_header.hop_index > 0 {
                             if let Some(hop) = packet.routing_header.previous_hop() {
-                                utils::log_default(&format!("DRONE {} - PACKET SENT: {}", hop, packet));
+                                utils::log(&format!("DRONE {} - PACKET SENT: {}", hop, packet), Color::from_rgb_u8(128, 95, 47));
                             }
                         } else {
-                            utils::log_default(&format!("DRONE {} - PACKET SENT: {}", packet.routing_header.hops[0], packet));
+                            utils::log(&format!("DRONE {} - PACKET SENT: {}", packet.routing_header.hops[0], packet), Color::from_rgb_u8(128, 95, 47));
                         }
                     } else {
-                        utils::log_default(&format!("DRONE - PACKET SENT: {}", packet));
+                        utils::log(&format!("DRONE - PACKET SENT: {}", packet), Color::from_rgb_u8(128, 95, 47));
                     }
                 },
                 DroneEvent::ControllerShortcut(packet) => {
@@ -369,7 +369,7 @@ impl SimulationController {
                 },
                 DroneEvent::PacketDropped(packet) => {
                     let index = packet.routing_header.hop_index;
-                    utils::log(&format!("DRONE {} - PACKET DROPPED: {}", packet.routing_header.hops[index], packet), Color::from_rgb_u8(255, 94, 160));
+                    utils::log(&format!("DRONE {} - PACKET DROPPED: {}", packet.routing_header.hops[index], packet), Color::from_rgb_u8(128, 95, 47));
                 }
                 
             }
@@ -616,13 +616,60 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             {
                 let sc = sc.lock().unwrap();
+                let generic_graph = utils::generate_generic_network_view(
+            &sc.network_view,
+                    &sc.clients,
+                    &sc.servers,
+                    &sc.drones,
+                );
+                
                 match node_type {
                     SimulationControllerType::ChatClient | SimulationControllerType::WebBrowser => {
                         let sender1 = &sc.clients.get(&node_id).unwrap().1;
+
+                        if let Some(nodes) = generic_graph.get(&(node_id, "client".to_string())) {
+
+                            for node in nodes.iter() {
+
+                                if sc.drones.contains_key(node) {
+                                    let sender2 = &sc.drones.get(&node).unwrap().1;
+                                    sender2.send(DroneCommand::RemoveSender(node_id));
+                                }
+                                else if sc.clients.contains_key(node) {
+                                    let sender2 = &sc.clients.get(node).unwrap().1;
+                                    sender2.send(Box::new(NodeCommand::RemoveSender(node_id)));
+                                }
+                                else if sc.servers.contains_key(node) {
+                                    let sender2 = &sc.servers.get(node).unwrap().1;
+                                    sender2.send(Box::new(NodeCommand::RemoveSender(node_id)));
+                                }
+                            }
+                        }
+
                         sender1.send(Box::new(NodeCommand::Shutdown));
                     }
                     SimulationControllerType::ChatServer | SimulationControllerType::WebServer => {
                         let sender1 = &sc.servers.get(&node_id).unwrap().1;
+
+                        if let Some(nodes) = generic_graph.get(&(node_id, "server".to_string())) {
+
+                            for node in nodes.iter() {
+
+                                if sc.drones.contains_key(node) {
+                                    let sender2 = &sc.drones.get(&node).unwrap().1;
+                                    sender2.send(DroneCommand::RemoveSender(node_id));
+                                }
+                                else if sc.clients.contains_key(node) {
+                                    let sender2 = &sc.clients.get(node).unwrap().1;
+                                    sender2.send(Box::new(NodeCommand::RemoveSender(node_id)));
+                                }
+                                else if sc.servers.contains_key(node) {
+                                    let sender2 = &sc.servers.get(node).unwrap().1;
+                                    sender2.send(Box::new(NodeCommand::RemoveSender(node_id)));
+                                }
+                            }
+                        }
+
                         sender1.send(Box::new(NodeCommand::Shutdown));
                     }
                     _ => {}
@@ -662,11 +709,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             {
                 let sc = sc.lock().unwrap();
-                                let generic_graph = utils::generate_generic_network_view(
-                        &sc.network_view,
-                            &sc.clients,
-                            &sc.servers,
-                            &sc.drones,
+                let generic_graph = utils::generate_generic_network_view(
+            &sc.network_view,
+                    &sc.clients,
+                    &sc.servers,
+                    &sc.drones,
                 );
                 match node_type {
                     SimulationControllerType::Drone => {
@@ -675,6 +722,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             return;
                         }
                         let sender1 = &sc.drones.get(&node_id).unwrap().1;
+
+                        if let Some(nodes) = generic_graph.get(&(node_id, "drone".to_string())) {
+
+                            for node in nodes.iter() {
+
+                                if sc.drones.contains_key(node) {
+                                    let sender2 = &sc.drones.get(&node).unwrap().1;
+                                    sender2.send(DroneCommand::RemoveSender(node_id));
+                                }
+                                else if sc.clients.contains_key(node) {
+                                    let sender2 = &sc.clients.get(node).unwrap().1;
+                                    sender2.send(Box::new(NodeCommand::RemoveSender(node_id)));
+                                }
+                                else if sc.servers.contains_key(node) {
+                                    let sender2 = &sc.servers.get(node).unwrap().1;
+                                    sender2.send(Box::new(NodeCommand::RemoveSender(node_id)));
+                                }
+                            }
+                        }
+
                         sender1.send(DroneCommand::Crash);
                     }
                     _ => {}
