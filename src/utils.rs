@@ -1,6 +1,5 @@
 use std::rc::Rc;
 use std::path::Path;
-use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
@@ -13,6 +12,13 @@ use common::types::Message;
 use crate::{Client, Drone, Server, SimulationController};
 use crate::{ MainWindow, LogMessage };
 
+use std::collections::{HashMap, HashSet};
+
+use common::network::Network;
+use crossbeam::channel::Sender;
+use common::types::{Command, NodeType, NodeCommand};
+use wg_internal::{controller::DroneCommand};
+use wg_internal::packet::NodeType as WGNodeType;
 static LOGGER: OnceCell<Box<dyn Fn(LogMessage) + Send + Sync + 'static>> = OnceCell::new();
 
 pub fn set_logger(cb: Box<dyn Fn(LogMessage) + Send + Sync + 'static>) {
@@ -70,6 +76,52 @@ pub fn save_chat_history(notification_from: &u8, history: &HashMap<NodeId, Vec<M
     }
     Ok(())
 }
+
+pub fn generate_generic_network_view(
+    network: &Network,
+    clients: &HashMap<NodeId, (NodeType, Sender<Box<dyn Command>>)>,
+    servers: &HashMap<NodeId, (NodeType, Sender<Box<dyn Command>>)>,
+    drones: &HashMap<NodeId, (f32, Sender<DroneCommand>)>,
+) -> HashMap<(NodeId, String), HashSet<NodeId>> {
+
+    let mut graph: HashMap<(NodeId, String), HashSet<NodeId>> = HashMap::new();
+
+    for node1 in &network.nodes {
+        let node1_id = node1.get_id();
+        let node1_type = match node1.get_node_type() {
+            WGNodeType::Drone => "drone",
+            WGNodeType::Client => "client",
+            WGNodeType::Server => "server",
+        }
+        .to_string();
+
+        let key1 = (node1_id, node1_type.clone());
+        graph.entry(key1).or_insert_with(HashSet::new);
+
+        for &node2_id in node1.get_adjacents() {
+            graph.entry((node1_id, node1_type.clone()))
+                .or_insert_with(HashSet::new)
+                .insert(node2_id);
+
+            let node2_type = if drones.contains_key(&node2_id) {
+                "drone"
+            } else if clients.contains_key(&node2_id) {
+                "client"
+            } else if servers.contains_key(&node2_id) {
+                "server"
+            } else {
+                "unknown"
+            };
+
+            graph.entry((node2_id, node2_type.to_string()))
+                .or_insert_with(HashSet::new)
+                .insert(node1_id);
+        }
+    }
+
+    graph
+}
+
 
 pub fn handle_registered_clients(notification_from: &u8, list: &Vec<u8>, main_window: Weak<MainWindow>, nodes: (Vec<(NodeId, String)>, Vec<(NodeId, String)>)) -> () {
     if let Some(mw) = main_window.upgrade() {
