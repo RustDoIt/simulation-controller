@@ -17,7 +17,7 @@ use crossbeam::select;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::str::FromStr;
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, Mutex, RwLock};
 
 use regex::Regex;
 use uuid::Uuid;
@@ -392,15 +392,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut drones = simulation_controller
         .get_drones_pdr();
     
-    let drones = Rc::new(VecModel::from(drones.iter().map(|(id, pdr)| Drone { title: format!("Drone {id}").into(), id: id.to_string().into(), pdr: (pdr * 100.0).to_string().into() }).collect::<Vec<_>>()));
+    let drones = Rc::new(VecModel::from(drones.iter().map(|(id, pdr)| Drone { title: format!("Drone {id}").into(), id: id.to_string().into(), pdr: format!("{:.2}", pdr * 100.0).trim_end_matches('0').trim_end_matches('.').to_string().into() }).collect::<Vec<_>>()));
 
     main_window.set_drones(drones.clone().into());
 
     // Clients & Servers
     let (clients, servers) = simulation_controller.get_nodes_with_type();
-
-    println!("{:?}", clients);
-    println!("{:?}", servers);
 
     // Clients    
     let clients = Rc::new(VecModel::from(clients.iter().map(|(node_id, node_type)| Client { title: format!("Client {node_id}").into(), subtitle: node_type.into(), id: node_id.to_string().into(), kind: node_type.into() }).collect::<Vec<_>>()));
@@ -440,900 +437,773 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         });
     }
 
-    let simulation_controller = Arc::new(simulation_controller);
-    let sc_add_sender = Arc::clone(&simulation_controller);
-    let sc_remove_sender = Arc::clone(&simulation_controller);
-    let sc_shutdown = Arc::clone(&simulation_controller);
-    let sc_crash = Arc::clone(&simulation_controller);
-    let sc_set_packet_drop_rate = Arc::clone(&simulation_controller);
-    let sc_get_chats_history = Arc::clone(&simulation_controller);
-    let sc_get_registered_clients = Arc::clone(&simulation_controller);
-    let sc_send_message = Arc::clone(&simulation_controller);
-    let sc_register_to_server = Arc::clone(&simulation_controller);
-    let sc_get_cached_files = Arc::clone(&simulation_controller);
-    let sc_get_file = Arc::clone(&simulation_controller);
-    let sc_get_text_files = Arc::clone(&simulation_controller);
-    let sc_get_text_file = Arc::clone(&simulation_controller);
-    let sc_get_media_files = Arc::clone(&simulation_controller);
-    let sc_get_media_file = Arc::clone(&simulation_controller);
-    let sc_add_text_file_from_path = Arc::clone(&simulation_controller);
-    let sc_add_media_file_from_path = Arc::clone(&simulation_controller);
-    let sc_remove_text_file = Arc::clone(&simulation_controller);
-    let sc_remove_media_file = Arc::clone(&simulation_controller);
-    let sc_query_text_files_list = Arc::clone(&simulation_controller);
-    let sc_get_text_files_list = Arc::clone(&simulation_controller);
-    let sc_add_text_file = Arc::clone(&simulation_controller);
 
-    main_window.on_add_sender({
-        move |node_command: SimulationControllerCommand, 
-            node_type: SimulationControllerType, 
-            node_id: SharedString,
-            args: AddSender| {
-                
+
+    let simulation_controller = Arc::new(Mutex::new(simulation_controller));
+
+    {
+        let sc = Arc::clone(&simulation_controller);
+        let main_window_weak = main_window.as_weak();
+
+        main_window.on_add_sender(move |node_command: SimulationControllerCommand, 
+                                    node_type: SimulationControllerType, 
+                                    node_id: SharedString,
+                                    args: AddSender| {
             println!("add_sender {:?}", node_id);
 
             let node_id = node_id.parse::<NodeId>().unwrap();
             let args_node_id = args.node_id.parse::<NodeId>().unwrap();
 
-            let sender2 = sc_add_sender
-                .network_initializer
-                .as_ref()
-                .unwrap()
-                .get_comms_channels()
-                .get(&args_node_id)
-                .unwrap()
-                .get_sender()
-                .clone();
+            let sender2 = {
+                let sc = sc.lock().unwrap();
+                sc.network_initializer
+                    .as_ref()
+                    .unwrap()
+                    .get_comms_channels()
+                    .get(&args_node_id)
+                    .unwrap()
+                    .get_sender()
+                    .clone()
+            };
 
-            match node_type {
-                SimulationControllerType::Drone => {
-                    let sender1 = &sc_add_sender
-                        .drones
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(DroneCommand::AddSender(args_node_id.clone(), sender2.clone()));
-                }
-
-                SimulationControllerType::ChatClient | SimulationControllerType::WebBrowser => {
-                    let sender1 = &sc_add_sender
-                        .clients
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(NodeCommand::AddSender(args_node_id.clone(), sender2.clone())));
-                }
-
-                SimulationControllerType::ChatServer | SimulationControllerType::WebServer => {
-                    let sender1 = &sc_add_sender
-                        .servers
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(NodeCommand::AddSender(args_node_id.clone(), sender2.clone())));
+            {
+                let sc = sc.lock().unwrap();
+                match node_type {
+                    SimulationControllerType::Drone => {
+                        let sender1 = &sc.drones.get(&node_id).unwrap().1;
+                        sender1.send(DroneCommand::AddSender(args_node_id.clone(), sender2.clone()));
+                    }
+                    SimulationControllerType::ChatClient | SimulationControllerType::WebBrowser => {
+                        let sender1 = &sc.clients.get(&node_id).unwrap().1;
+                        sender1.send(Box::new(NodeCommand::AddSender(args_node_id.clone(), sender2.clone())));
+                    }
+                    SimulationControllerType::ChatServer | SimulationControllerType::WebServer => {
+                        let sender1 = &sc.servers.get(&node_id).unwrap().1;
+                        sender1.send(Box::new(NodeCommand::AddSender(args_node_id.clone(), sender2.clone())));
+                    }
                 }
             }
 
-            //TODO aggiungere collegamento grafo
-        }
-    });
-    
-    main_window.on_remove_sender({
-        move |node_command: SimulationControllerCommand,
-            node_type: SimulationControllerType,
-            node_id: SharedString,
-            args: RemoveSender| {
+            {
+                let mut sc = sc.lock().unwrap();
+                utils::add_edge(node_id, args_node_id, &mut sc);
 
+                if let Some(mw) = main_window_weak.upgrade() {
+
+                    graph_utils::generate_graph(
+                        &mw,
+                        &sc.network_view,
+                        &sc.clients,
+                        &sc.servers,
+                        &sc.drones,
+                    );
+                }
+            }
+
+        });
+    }
+
+    
+    {
+        let sc = Arc::clone(&simulation_controller);
+        let main_window_weak = main_window.as_weak();
+
+        main_window.on_remove_sender(move |node_command: SimulationControllerCommand,
+                                        node_type: SimulationControllerType,
+                                        node_id: SharedString,
+                                        args: RemoveSender| {
             println!("remove_sender {:?}", node_id);
 
             let node_id = node_id.parse::<NodeId>().unwrap();
             let args_node_id = args.node_id.parse::<NodeId>().unwrap();
 
-            match node_type {
-                SimulationControllerType::Drone => {
-                    let sender1 = &sc_remove_sender
-                        .drones
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(DroneCommand::RemoveSender(args_node_id));
-                }
-
-                SimulationControllerType::ChatClient | SimulationControllerType::WebBrowser => {
-                    let sender1 = &sc_remove_sender
-                        .clients
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(NodeCommand::RemoveSender(args_node_id.clone())));
-                }
-
-                SimulationControllerType::ChatServer | SimulationControllerType::WebServer => {
-                    let sender1 = &sc_remove_sender
-                        .servers
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(NodeCommand::RemoveSender(args_node_id.clone())));
+            {
+                let sc = sc.lock().unwrap();
+                match node_type {
+                    SimulationControllerType::Drone => {
+                        let sender1 = &sc.drones.get(&node_id).unwrap().1;
+                        sender1.send(DroneCommand::RemoveSender(args_node_id));
+                    }
+                    SimulationControllerType::ChatClient | SimulationControllerType::WebBrowser => {
+                        let sender1 = &sc.clients.get(&node_id).unwrap().1;
+                        sender1.send(Box::new(NodeCommand::RemoveSender(args_node_id.clone())));
+                    }
+                    SimulationControllerType::ChatServer | SimulationControllerType::WebServer => {
+                        let sender1 = &sc.servers.get(&node_id).unwrap().1;
+                        sender1.send(Box::new(NodeCommand::RemoveSender(args_node_id.clone())));
+                    }
                 }
             }
 
-            //TODO rimuovere collegamento grafo
+            {
+                let mut sc = sc.lock().unwrap();
+                utils::remove_edge(node_id, args_node_id, &mut sc);
 
-            // for node in sc_remove_sender.network_view.nodes.iter() {
-            //     if node_id == node.get_id() {
-            //         // remove node
-            //     }
-            // }
+                if let Some(mw) = main_window_weak.upgrade() {
+                    graph_utils::generate_graph(
+                        &mw,
+                        &sc.network_view,
+                        &sc.clients,
+                        &sc.servers,
+                        &sc.drones,
+                    );
+                }
+            }
+        });
+    }
 
-            // for node in sc_remove_sender.network_initializer
-        }
-    });
+    {
+        let sc = Arc::clone(&simulation_controller);
+        let main_window_weak = main_window.as_weak();
 
-    main_window.on_shutdown({
-        move |node_command: SimulationControllerCommand,
-            node_type: SimulationControllerType,
-            node_id: SharedString| {
-
+        main_window.on_shutdown(move |node_command: SimulationControllerCommand,
+                                node_type: SimulationControllerType,
+                                node_id: SharedString| {
             println!("shutdown {:?}", node_id);
 
             let node_id = node_id.parse::<NodeId>().unwrap();
 
-            match node_type {
-
-                SimulationControllerType::ChatClient | SimulationControllerType::WebBrowser => {
-                    let sender1 = &sc_shutdown
-                        .clients
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(NodeCommand::Shutdown));
+            {
+                let sc = sc.lock().unwrap();
+                match node_type {
+                    SimulationControllerType::ChatClient | SimulationControllerType::WebBrowser => {
+                        let sender1 = &sc.clients.get(&node_id).unwrap().1;
+                        sender1.send(Box::new(NodeCommand::Shutdown));
+                    }
+                    SimulationControllerType::ChatServer | SimulationControllerType::WebServer => {
+                        let sender1 = &sc.servers.get(&node_id).unwrap().1;
+                        sender1.send(Box::new(NodeCommand::Shutdown));
+                    }
+                    _ => {}
                 }
-
-                SimulationControllerType::ChatServer | SimulationControllerType::WebServer => {
-                    let sender1 = &sc_shutdown
-                        .servers
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(NodeCommand::Shutdown));
-                }
-
-                _ => {}
             }
 
-            //TODO rimuovere collegamento grafo
-            //TODO rimuovere dalla lista
-        }
-    });
+            {
+                let mut sc = sc.lock().unwrap();
+                utils::remove_node(node_id, &mut sc);
 
-    main_window.on_crash({
-        move |node_command: SimulationControllerCommand,
-            node_type: SimulationControllerType,
-            node_id: SharedString| {
+                if let Some(mw) = main_window_weak.upgrade() {
 
+                    utils::draw_menu(&mw, &sc);
+                    
+                    graph_utils::generate_graph(
+                        &mw,
+                        &sc.network_view,
+                        &sc.clients,
+                        &sc.servers,
+                        &sc.drones,
+                    );
+                }
+            }
+        });
+    }
+
+    {
+        let sc = Arc::clone(&simulation_controller);
+        let main_window_weak = main_window.as_weak();
+
+        main_window.on_crash(move |node_command: SimulationControllerCommand,
+                                node_type: SimulationControllerType,
+                                node_id: SharedString| {
             println!("crash {:?}", node_id);
 
             let node_id = node_id.parse::<NodeId>().unwrap();
 
-            match node_type {
-                SimulationControllerType::Drone => {
-                    let sender1 = &sc_crash
-                        .drones
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(DroneCommand::Crash);
+            {
+                let sc = sc.lock().unwrap();
+                match node_type {
+                    SimulationControllerType::Drone => {
+                        let sender1 = &sc.drones.get(&node_id).unwrap().1;
+                        sender1.send(DroneCommand::Crash);
+                    }
+                    _ => {}
                 }
-
-                _ => {}
             }
 
-            //TODO rimuovere collegamento grafo
-            //TODO rimuovere dalla lista
-        }
-    });
+            {
+                let mut sc = sc.lock().unwrap();
+                utils::remove_node(node_id, &mut sc);
 
-    main_window.on_set_packet_drop_rate({
-        move |node_command: SimulationControllerCommand,
-            node_type: SimulationControllerType,
-            node_id: SharedString,
-            args: SetPacketDropRate| {
+                if let Some(mw) = main_window_weak.upgrade() {
 
-            println!("set_packet_drop_rate {:?}", node_id);
-
-            let node_id = node_id.parse::<NodeId>().unwrap();
-            let args_pdr = args.pdr.parse::<f32>().unwrap() / 100.;
-
-            match node_type {
-                SimulationControllerType::Drone => {
-                    let sender1 = &sc_set_packet_drop_rate
-                        .drones
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(DroneCommand::SetPacketDropRate(args_pdr.clone()));
+                    utils::draw_menu(&mw, &sc);
+                    
+                    graph_utils::generate_graph(
+                        &mw,
+                        &sc.network_view,
+                        &sc.clients,
+                        &sc.servers,
+                        &sc.drones,
+                    );
                 }
-
-                _ => {}
             }
+        });
+    }
 
-            //TODO cambiare testo menu
-        }
-    }); 
+    {
+        let sc = Arc::clone(&simulation_controller);
+        let main_window_weak = main_window.as_weak();
 
-    main_window.on_get_chats_history({
-        move |node_command: SimulationControllerCommand,
-            node_type: SimulationControllerType,
-            node_id: SharedString| {
+        main_window.on_set_packet_drop_rate(
+            move |node_command: SimulationControllerCommand,
+                node_type: SimulationControllerType,
+                node_id: SharedString,
+                args: SetPacketDropRate| {
+                println!("set_packet_drop_rate {:?}", node_id);
 
-            println!("get_chats_history {:?}", node_id);
-            
-            let node_id = node_id.parse::<NodeId>().unwrap();
+                let node_id = node_id.parse::<NodeId>().unwrap();
+                let args_pdr = args.pdr.parse::<f32>().unwrap() / 100.;
 
-            match node_type {
-                SimulationControllerType::ChatClient => {
-                    let sender1 = &sc_get_chats_history
-                        .clients
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(ChatCommand::GetChatsHistory));
+                {
+                    let sc = sc.lock().unwrap();
+                    match node_type {
+                        SimulationControllerType::Drone => {
+                            let sender1 = &sc.drones.get(&node_id).unwrap().1;
+                            sender1.send(DroneCommand::SetPacketDropRate(args_pdr.clone()));
+                        }
+                        _ => {}
+                    }
                 }
 
-                SimulationControllerType::ChatServer => {
-                    let sender1 = &sc_get_chats_history
-                        .servers
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
+                {
+                    let mut sc = sc.lock().unwrap();
 
-                    sender1.send(Box::new(ChatCommand::GetChatsHistory));
+                    if let Some((value, _)) = sc.drones.get_mut(&node_id) {
+                        *value = args_pdr;
+                    }
+
+                    if let Some(mw) = main_window_weak.upgrade() {
+
+                        utils::draw_menu(&mw, &sc);
+                    }
                 }
+            },
+        );
+    }
 
-                _ => {}
-            }
+    {
+        let sc = Arc::clone(&simulation_controller);
+        main_window.on_get_chats_history(
+            move |node_command: SimulationControllerCommand,
+                node_type: SimulationControllerType,
+                node_id: SharedString| {
+                println!("get_chats_history {:?}", node_id);
 
-            //TODO creare file di testo
-        }
-    });
+                let node_id = node_id.parse::<NodeId>().unwrap();
 
-    main_window.on_get_registered_clients({
-        move |node_command: SimulationControllerCommand,
-            node_type: SimulationControllerType,
-            node_id: SharedString| {
-
-            println!("get_registered_clients {:?}", node_id);
-
-            let node_id = node_id.parse::<NodeId>().unwrap();
-
-            match node_type {
-                SimulationControllerType::ChatClient => {
-                    let sender1 = &sc_get_registered_clients
-                        .clients
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(ChatCommand::GetRegisteredClients));
+                {
+                    let sc = sc.lock().unwrap();
+                    match node_type {
+                        SimulationControllerType::ChatClient => {
+                            let sender1 = &sc.clients.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(ChatCommand::GetChatsHistory));
+                        }
+                        SimulationControllerType::ChatServer => {
+                            let sender1 = &sc.servers.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(ChatCommand::GetChatsHistory));
+                        }
+                        _ => {}
+                    }
                 }
+            },
+        );
+    }
 
-                SimulationControllerType::ChatServer => {
-                    let sender1 = &sc_get_registered_clients
-                        .servers
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
 
-                    sender1.send(Box::new(ChatCommand::GetRegisteredClients));
+    {
+        let sc = Arc::clone(&simulation_controller);
+        main_window.on_get_registered_clients(
+            move |node_command: SimulationControllerCommand,
+                node_type: SimulationControllerType,
+                node_id: SharedString| {
+                println!("get_registered_clients {:?}", node_id);
+
+                let node_id = node_id.parse::<NodeId>().unwrap();
+
+                {
+                    let sc = sc.lock().unwrap();
+                    match node_type {
+                        SimulationControllerType::ChatClient => {
+                            let sender1 = &sc.clients.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(ChatCommand::GetRegisteredClients));
+                        }
+                        SimulationControllerType::ChatServer => {
+                            let sender1 = &sc.servers.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(ChatCommand::GetRegisteredClients));
+                        }
+                        _ => {}
+                    }
                 }
+            },
+        );
+    }
 
-                _ => {}
-            }
+    {
+        let sc = Arc::clone(&simulation_controller);
+        main_window.on_send_message(
+            move |node_command: SimulationControllerCommand,
+                node_type: SimulationControllerType,
+                node_id: SharedString,
+                args: SendMessage| {
+                println!("send_message {:?}", node_id);
 
-            //TODO label grafo
-        }
-    });
+                let node_id = node_id.parse::<NodeId>().unwrap();
+                let from = args.from.parse::<NodeId>().unwrap();
+                let to = args.to.parse::<NodeId>().unwrap();
+                let text = args.text.parse::<String>().unwrap();
 
-    main_window.on_send_message({
-        move |node_command: SimulationControllerCommand,
-            node_type: SimulationControllerType,
-            node_id: SharedString,
-            args: SendMessage| {
-
-            println!("send_message {:?}", node_id);
-
-            let node_id = node_id.parse::<NodeId>().unwrap();
-            
-            let from = args.from.parse::<NodeId>().unwrap();
-            let to = args.to.parse::<NodeId>().unwrap();
-            let text = args.text.parse::<String>().unwrap();
-
-            match node_type {
-                SimulationControllerType::ChatClient => {
-                    let sender1 = &sc_send_message
-                        .clients
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(ChatCommand::SendMessage(Message {from: from, to: to, text: text})));
+                {
+                    let sc = sc.lock().unwrap();
+                    match node_type {
+                        SimulationControllerType::ChatClient => {
+                            let sender1 = &sc.clients.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(ChatCommand::SendMessage(Message { from, to, text })));
+                        }
+                        SimulationControllerType::ChatServer => {
+                            let sender1 = &sc.servers.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(ChatCommand::SendMessage(Message { from, to, text })));
+                        }
+                        _ => {}
+                    }
                 }
+            },
+        );
+    }
 
-                SimulationControllerType::ChatServer => {
-                    let sender1 = &sc_send_message
-                        .servers
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
+    {
+        let sc = Arc::clone(&simulation_controller);
+        let main_window_weak = main_window.as_weak();
 
-                    sender1.send(Box::new(ChatCommand::SendMessage(Message {from: from, to: to, text: text})));
+        main_window.on_register_to_server(
+            move |node_command: SimulationControllerCommand,
+                node_type: SimulationControllerType,
+                node_id: SharedString,
+                args: RegisterToServer| {
+                println!("register_to_server {:?}", node_id);
+
+                let node_id = node_id.parse::<NodeId>().unwrap();
+                let args_node_id = args.node_id.parse::<NodeId>().unwrap();
+
+                {
+                    let sc = sc.lock().unwrap();
+                    match node_type {
+                        SimulationControllerType::ChatClient => {
+                            let sender1 = &sc.clients.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(ChatCommand::RegisterToServer(args_node_id)));
+                        }
+                        SimulationControllerType::ChatServer => {
+                            let sender1 = &sc.servers.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(ChatCommand::RegisterToServer(args_node_id)));
+                        }
+                        _ => {}
+                    }
                 }
+            },
+        );
+    }
 
-                _ => {}
-            }
-        }
-    });
 
-    main_window.on_register_to_server({
-        move |node_command: SimulationControllerCommand,
-            node_type: SimulationControllerType,
-            node_id: SharedString,
-            args: RegisterToServer| {
+    {
+        let sc = Arc::clone(&simulation_controller);
+        main_window.on_get_cached_files(
+            move |node_command: SimulationControllerCommand,
+                node_type: SimulationControllerType,
+                node_id: SharedString| {
+                println!("get_cached_files {:?}", node_id);
 
-            println!("register_to_server {:?}", node_id);
+                let node_id = node_id.parse::<NodeId>().unwrap();
 
-            let node_id = node_id.parse::<NodeId>().unwrap();
-            
-            let args_node_id = args.node_id.parse::<NodeId>().unwrap();
-
-            match node_type {
-                SimulationControllerType::ChatClient => {
-                    let sender1 = &sc_register_to_server
-                        .clients
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(ChatCommand::RegisterToServer(args_node_id)));
+                {
+                    let sc = sc.lock().unwrap();
+                    match node_type {
+                        SimulationControllerType::WebBrowser => {
+                            let sender1 = &sc.clients.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(WebCommand::GetCachedFiles));
+                        }
+                        SimulationControllerType::WebServer => {
+                            let sender1 = &sc.servers.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(WebCommand::GetCachedFiles));
+                        }
+                        _ => {}
+                    }
                 }
+            },
+        );
+    }
 
-                SimulationControllerType::ChatServer => {
-                    let sender1 = &sc_register_to_server
-                        .servers
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
 
-                    sender1.send(Box::new(ChatCommand::RegisterToServer(args_node_id)));
+    {
+        let sc = Arc::clone(&simulation_controller);
+        main_window.on_get_file(
+            move |node_command: SimulationControllerCommand,
+                node_type: SimulationControllerType,
+                node_id: SharedString,
+                args: GetFile| {
+                println!("get_file {:?}", node_id);
+
+                let node_id = node_id.parse::<NodeId>().unwrap();
+                let uuid = args.uuid.parse::<Uuid>().unwrap();
+
+                {
+                    let sc = sc.lock().unwrap();
+                    match node_type {
+                        SimulationControllerType::WebBrowser => {
+                            let sender1 = &sc.clients.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(WebCommand::GetFile(uuid)));
+                        }
+                        SimulationControllerType::WebServer => {
+                            let sender1 = &sc.servers.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(WebCommand::GetFile(uuid)));
+                        }
+                        _ => {}
+                    }
                 }
+            },
+        );
+    }
 
-                _ => {}
-            }
 
-            //TODO label grafo
+    {
+        let sc = Arc::clone(&simulation_controller);
+        main_window.on_get_text_files(
+            move |node_command: SimulationControllerCommand,
+                node_type: SimulationControllerType,
+                node_id: SharedString| {
+                println!("get_text_files {:?}", node_id);
 
-        }
-    });
+                let node_id = node_id.parse::<NodeId>().unwrap();
 
-    main_window.on_get_cached_files({
-        move |node_command: SimulationControllerCommand,
-            node_type: SimulationControllerType,
-            node_id: SharedString| {
-
-            println!("get_cached_files {:?}", node_id);
-
-            let node_id = node_id.parse::<NodeId>().unwrap();
-
-            match node_type {
-                SimulationControllerType::WebBrowser => {
-                    let sender1 = &sc_get_cached_files
-                        .clients
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(WebCommand::GetCachedFiles));
+                {
+                    let sc = sc.lock().unwrap();
+                    match node_type {
+                        SimulationControllerType::WebBrowser => {
+                            let sender1 = &sc.clients.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(WebCommand::GetTextFiles));
+                        }
+                        SimulationControllerType::WebServer => {
+                            let sender1 = &sc.servers.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(WebCommand::GetTextFiles));
+                        }
+                        _ => {}
+                    }
                 }
+            },
+        );
+    }
 
-                SimulationControllerType::WebServer => {
-                    let sender1 = &sc_get_cached_files
-                        .servers
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
 
-                    sender1.send(Box::new(WebCommand::GetCachedFiles));
+    {
+        let sc = Arc::clone(&simulation_controller);
+        main_window.on_get_text_file(
+            move |node_command: SimulationControllerCommand,
+                node_type: SimulationControllerType,
+                node_id: SharedString,
+                args: GetTextFile| {
+                println!("get_text_file {:?}", node_id);
+
+                let node_id = node_id.parse::<NodeId>().unwrap();
+                let uuid = args.uuid.parse::<Uuid>().unwrap();
+
+                {
+                    let sc = sc.lock().unwrap();
+                    match node_type {
+                        SimulationControllerType::WebBrowser => {
+                            let sender1 = &sc.clients.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(WebCommand::GetTextFile(uuid)));
+                        }
+                        SimulationControllerType::WebServer => {
+                            let sender1 = &sc.servers.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(WebCommand::GetTextFile(uuid)));
+                        }
+                        _ => {}
+                    }
                 }
+            },
+        );
+    }
 
-                _ => {}
-            }
 
-            //TODO salvare cached files
-        }
-    });
+    {
+        let sc = Arc::clone(&simulation_controller);
+        main_window.on_get_media_files(
+            move |node_command: SimulationControllerCommand,
+                node_type: SimulationControllerType,
+                node_id: SharedString| {
+                println!("get_media_files {:?}", node_id);
 
-    main_window.on_get_file({
-        move |node_command: SimulationControllerCommand,
-            node_type: SimulationControllerType,
-            node_id: SharedString,
-            args: GetFile| {
+                let node_id = node_id.parse::<NodeId>().unwrap();
 
-            println!("get_file {:?}", node_id);
-
-            let node_id = node_id.parse::<NodeId>().unwrap();
-            
-            let uuid = args.uuid.parse::<Uuid>().unwrap();
-
-            match node_type {
-                SimulationControllerType::WebBrowser => {
-                    let sender1 = &sc_get_file
-                        .clients
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(WebCommand::GetFile(uuid)));
+                {
+                    let sc = sc.lock().unwrap();
+                    match node_type {
+                        SimulationControllerType::WebBrowser => {
+                            let sender1 = &sc.clients.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(WebCommand::GetMediaFiles));
+                        }
+                        SimulationControllerType::WebServer => {
+                            let sender1 = &sc.servers.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(WebCommand::GetMediaFiles));
+                        }
+                        _ => {}
+                    }
                 }
+            },
+        );
+    }
 
-                SimulationControllerType::WebServer => {
-                    let sender1 = &sc_get_file
-                        .servers
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
 
-                    sender1.send(Box::new(WebCommand::GetFile(uuid)));
+    {
+        let sc = Arc::clone(&simulation_controller);
+        main_window.on_get_media_file(
+            move |node_command: SimulationControllerCommand,
+                node_type: SimulationControllerType,
+                node_id: SharedString,
+                args: GetMediaFile| {
+                println!("get_media_file {:?}", node_id);
+
+                let node_id = node_id.parse::<NodeId>().unwrap();
+                let media_id = args.media_id.parse::<Uuid>().unwrap();
+                let location = args.location.parse::<NodeId>().unwrap();
+
+                {
+                    let sc = sc.lock().unwrap();
+                    match node_type {
+                        SimulationControllerType::WebBrowser => {
+                            let sender1 = &sc.clients.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(WebCommand::GetMediaFile { media_id, location }));
+                        }
+                        SimulationControllerType::WebServer => {
+                            let sender1 = &sc.servers.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(WebCommand::GetMediaFile { media_id, location }));
+                        }
+                        _ => {}
+                    }
                 }
+            },
+        );
+    }
 
-                _ => {}
-            }
 
-            //TODO salvare file
-        }
-    });
+    {
+        let sc = Arc::clone(&simulation_controller);
+        main_window.on_add_text_file(
+            move |node_command: SimulationControllerCommand,
+                node_type: SimulationControllerType,
+                node_id: SharedString,
+                args: AddTextFile| {
+                println!("add_text_file {:?}", node_id);
 
-    main_window.on_get_text_files({
-        move |node_command: SimulationControllerCommand,
-            node_type: SimulationControllerType,
-            node_id: SharedString| {
+                let node_id = node_id.parse::<NodeId>().unwrap();
+                let re = Regex::new(r"\((\d+),([^)]+)\)").unwrap();
 
-            println!("get_text_files {:?}", node_id);
+                let title = args.title.parse::<String>().unwrap();
+                let content = args.content.parse::<String>().unwrap();
+                let media_refs: Vec<MediaReference> = re
+                    .captures_iter(&args.media_refs.parse::<String>().unwrap())
+                    .map(|cap| {
+                        let location: NodeId = cap[1].parse().unwrap();
+                        let id = Uuid::parse_str(&cap[2]).unwrap();
+                        MediaReference { location, id }
+                    })
+                    .collect();
 
-            let node_id = node_id.parse::<NodeId>().unwrap();
-            
-            match node_type {
-                SimulationControllerType::WebBrowser => {
-                    let sender1 = &sc_get_text_files
-                        .clients
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(WebCommand::GetTextFiles));
+                {
+                    let sc = sc.lock().unwrap();
+                    match node_type {
+                        SimulationControllerType::WebBrowser => {
+                            let sender1 = &sc.clients.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(WebCommand::AddTextFile(TextFile::new(title.clone(), content.clone(), media_refs.clone()))));
+                        }
+                        SimulationControllerType::WebServer => {
+                            let sender1 = &sc.servers.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(WebCommand::AddTextFile(TextFile::new(title, content, media_refs))));
+                        }
+                        _ => {}
+                    }
                 }
+            },
+        );
+    }
 
-                SimulationControllerType::WebServer => {
-                    let sender1 = &sc_get_text_files
-                        .servers
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
+    {
+        let sc = Arc::clone(&simulation_controller);
+        main_window.on_add_text_file_from_path(
+            move |node_command: SimulationControllerCommand,
+                node_type: SimulationControllerType,
+                node_id: SharedString,
+                args: AddTextFileFromPath| {
+                println!("add_text_file_from_path {:?}", node_id);
 
-                    sender1.send(Box::new(WebCommand::GetTextFiles));
+                let node_id = node_id.parse::<NodeId>().unwrap();
+                let file_path = args.file_path.parse::<String>().unwrap();
+
+                {
+                    let sc = sc.lock().unwrap();
+                    match node_type {
+                        SimulationControllerType::WebBrowser => {
+                            let sender1 = &sc.clients.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(WebCommand::AddTextFileFromPath(file_path.clone())));
+                        }
+                        SimulationControllerType::WebServer => {
+                            let sender1 = &sc.servers.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(WebCommand::AddTextFileFromPath(file_path)));
+                        }
+                        _ => {}
+                    }
                 }
+            },
+        );
+    }
 
-                _ => {}
-            }
 
-            //TODO salvare text files
-        }
-    });
+    {
+        let sc = Arc::clone(&simulation_controller);
+        main_window.on_add_media_file_from_path(
+            move |node_command: SimulationControllerCommand,
+                node_type: SimulationControllerType,
+                node_id: SharedString,
+                args: AddMediaFileFromPath| {
+                println!("add_media_file_from_path {:?}", node_id);
 
-    main_window.on_get_text_file({
-        move |node_command: SimulationControllerCommand,
-            node_type: SimulationControllerType,
-            node_id: SharedString,
-            args: GetTextFile| {
+                let node_id = node_id.parse::<NodeId>().unwrap();
+                let file_path = args.file_path.parse::<String>().unwrap();
 
-            println!("get_text_file {:?}", node_id);
-
-            let node_id = node_id.parse::<NodeId>().unwrap();
-            
-            let uuid = args.uuid.parse::<Uuid>().unwrap();
-
-            match node_type {
-                SimulationControllerType::WebBrowser => {
-                    let sender1 = &sc_get_text_file
-                        .clients
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(WebCommand::GetTextFile(uuid)));
+                {
+                    let sc = sc.lock().unwrap();
+                    match node_type {
+                        SimulationControllerType::WebBrowser => {
+                            let sender1 = &sc.clients.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(WebCommand::AddMediaFileFromPath(file_path.clone())));
+                        }
+                        SimulationControllerType::WebServer => {
+                            let sender1 = &sc.servers.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(WebCommand::AddMediaFileFromPath(file_path)));
+                        }
+                        _ => {}
+                    }
                 }
+            },
+        );
+    }
 
-                SimulationControllerType::WebServer => {
-                    let sender1 = &sc_get_text_file
-                        .servers
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
 
-                    sender1.send(Box::new(WebCommand::GetTextFile(uuid)));
+    {
+        let sc = Arc::clone(&simulation_controller);
+        main_window.on_remove_text_file(
+            move |node_command: SimulationControllerCommand,
+                node_type: SimulationControllerType,
+                node_id: SharedString,
+                args: RemoveTextFile| {
+                println!("remove_text_file {:?}", node_id);
+
+                let node_id = node_id.parse::<NodeId>().unwrap();
+                let uuid = args.uuid.parse::<Uuid>().unwrap();
+
+                {
+                    let sc = sc.lock().unwrap();
+                    match node_type {
+                        SimulationControllerType::WebBrowser => {
+                            let sender1 = &sc.clients.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(WebCommand::RemoveTextFile(uuid)));
+                        }
+                        SimulationControllerType::WebServer => {
+                            let sender1 = &sc.servers.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(WebCommand::RemoveTextFile(uuid)));
+                        }
+                        _ => {}
+                    }
                 }
+            },
+        );
+    }
 
-                _ => {}
-            }
 
-            //TODO salvare text file
-        }
-    });
+    {
+        let sc = Arc::clone(&simulation_controller);
+        main_window.on_remove_media_file(
+            move |node_command: SimulationControllerCommand,
+                node_type: SimulationControllerType,
+                node_id: SharedString,
+                args: RemoveMediaFile| {
+                println!("remove_media_file {:?}", node_id);
 
-    main_window.on_get_media_files({
-        move |node_command: SimulationControllerCommand,
-            node_type: SimulationControllerType,
-            node_id: SharedString| {
+                let node_id = node_id.parse::<NodeId>().unwrap();
+                let uuid = args.uuid.parse::<Uuid>().unwrap();
 
-            println!("get_media_files {:?}", node_id);
-
-            let node_id = node_id.parse::<NodeId>().unwrap();
-            
-            match node_type {
-                SimulationControllerType::WebBrowser => {
-                    let sender1 = &sc_get_media_files
-                        .clients
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(WebCommand::GetMediaFiles));
+                {
+                    let sc = sc.lock().unwrap();
+                    match node_type {
+                        SimulationControllerType::WebBrowser => {
+                            let sender1 = &sc.clients.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(WebCommand::RemoveMediaFile(uuid)));
+                        }
+                        SimulationControllerType::WebServer => {
+                            let sender1 = &sc.servers.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(WebCommand::RemoveMediaFile(uuid)));
+                        }
+                        _ => {}
+                    }
                 }
+            },
+        );
+    }
 
-                SimulationControllerType::WebServer => {
-                    let sender1 = &sc_get_media_files
-                        .servers
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
 
-                    sender1.send(Box::new(WebCommand::GetMediaFiles));
+    {
+        let sc = Arc::clone(&simulation_controller);
+        main_window.on_query_text_files_list(
+            move |node_command: SimulationControllerCommand,
+                node_type: SimulationControllerType,
+                node_id: SharedString| {
+                println!("query_text_files_list {:?}", node_id);
+
+                let node_id = node_id.parse::<NodeId>().unwrap();
+
+                {
+                    let sc = sc.lock().unwrap();
+                    match node_type {
+                        SimulationControllerType::WebBrowser => {
+                            let sender1 = &sc.clients.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(WebCommand::QueryTextFilesList));
+                        }
+                        SimulationControllerType::WebServer => {
+                            let sender1 = &sc.servers.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(WebCommand::QueryTextFilesList));
+                        }
+                        _ => {}
+                    }
                 }
+            },
+        );
+    }
 
-                _ => {}
-            }
+    {
+        let sc = Arc::clone(&simulation_controller);
+        main_window.on_get_text_files_list(
+            move |node_command: SimulationControllerCommand,
+                node_type: SimulationControllerType,
+                node_id: SharedString| {
+                println!("get_text_files_list {:?}", node_id);
 
-            //TODO salvare media files
-        }
-    });
+                let node_id = node_id.parse::<NodeId>().unwrap();
 
-    main_window.on_get_media_file({
-        move |node_command: SimulationControllerCommand,
-            node_type: SimulationControllerType,
-            node_id: SharedString,
-            args: GetMediaFile| {
-
-            println!("get_media_file {:?}", node_id);
-            
-            let node_id = node_id.parse::<NodeId>().unwrap();
-            
-            let media_id = args.media_id.parse::<Uuid>().unwrap();
-            let location = args.location.parse::<NodeId>().unwrap();
-
-            match node_type {
-                SimulationControllerType::WebBrowser => {
-                    let sender1 = &sc_get_media_file
-                        .clients
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(WebCommand::GetMediaFile { media_id: media_id, location: location }));
+                {
+                    let sc = sc.lock().unwrap();
+                    match node_type {
+                        SimulationControllerType::WebBrowser => {
+                            let sender1 = &sc.clients.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(WebCommand::GetTextFilesList));
+                        }
+                        SimulationControllerType::WebServer => {
+                            let sender1 = &sc.servers.get(&node_id).unwrap().1;
+                            sender1.send(Box::new(WebCommand::GetTextFilesList));
+                        }
+                        _ => {}
+                    }
                 }
-
-                SimulationControllerType::WebServer => {
-                    let sender1 = &sc_get_media_file
-                        .servers
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(WebCommand::GetMediaFile { media_id: media_id, location: location }));
-                }
-
-                _ => {}
-            }
-
-            //TODO salvare media file
-        }
-    });
-
-    main_window.on_add_text_file({
-        move |node_command: SimulationControllerCommand,
-            node_type: SimulationControllerType,
-            node_id: SharedString,
-            args: AddTextFile| {
-
-            println!("add_text_file {:?}", node_id);
-
-            let node_id = node_id.parse::<NodeId>().unwrap();
-            
-            let re = Regex::new(r"\((\d+),([^)]+)\)").unwrap();
-            
-            let title = args.title.parse::<String>().unwrap();
-            let content = args.content.parse::<String>().unwrap();
-            let media_refs: Vec<MediaReference> = re
-                .captures_iter(&args.media_refs.parse::<String>().unwrap())
-                .map(|cap| {
-                    let location: NodeId = cap[1].parse().unwrap();
-                    let id = Uuid::parse_str(&cap[2]).unwrap();
-
-                    MediaReference { location, id }
-                })
-                .collect();
-
-
-            match node_type {
-                SimulationControllerType::WebBrowser => {
-                    let sender1 = &sc_add_text_file
-                        .clients
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(WebCommand::AddTextFile(TextFile::new(title, content, media_refs))));
-                }
-
-                SimulationControllerType::WebServer => {
-                    let sender1 = &sc_add_text_file
-                        .servers
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(WebCommand::AddTextFile(TextFile::new(title, content, media_refs))));
-                }
-
-                _ => {}
-            }
-        }
-    });
-
-    main_window.on_add_text_file_from_path({
-        move |node_command: SimulationControllerCommand,
-            node_type: SimulationControllerType,
-            node_id: SharedString,
-            args: AddTextFileFromPath| {
-
-            println!("add_text_file_from_path {:?}", node_id);
-
-            let node_id = node_id.parse::<NodeId>().unwrap();
-            
-            let file_path = args.file_path.parse::<String>().unwrap();
-
-            match node_type {
-                SimulationControllerType::WebBrowser => {
-                    let sender1 = &sc_add_text_file_from_path
-                        .clients
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(WebCommand::AddTextFileFromPath(file_path)));
-                }
-
-                SimulationControllerType::WebServer => {
-                    let sender1 = &sc_add_text_file_from_path
-                        .servers
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(WebCommand::AddTextFileFromPath(file_path)));
-                }
-
-                _ => {}
-            }
-        }
-    });
-
-    main_window.on_add_media_file_from_path({
-        move |node_command: SimulationControllerCommand,
-            node_type: SimulationControllerType,
-            node_id: SharedString,
-            args: AddMediaFileFromPath| {
-
-            println!("add_media_file_from_path {:?}", node_id);
-
-            let node_id = node_id.parse::<NodeId>().unwrap();
-            
-            let file_path = args.file_path.parse::<String>().unwrap();
-
-            match node_type {
-                SimulationControllerType::WebBrowser => {
-                    let sender1 = &sc_add_media_file_from_path
-                        .clients
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(WebCommand::AddMediaFileFromPath(file_path)));
-                }
-
-                SimulationControllerType::WebServer => {
-                    let sender1 = &sc_add_media_file_from_path
-                        .servers
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(WebCommand::AddMediaFileFromPath(file_path)));
-                }
-
-                _ => {}
-            }
-        }
-    });
-
-    main_window.on_remove_text_file({
-        move |node_command: SimulationControllerCommand,
-            node_type: SimulationControllerType,
-            node_id: SharedString,
-            args: RemoveTextFile| {
-
-            println!("remove_text_file {:?}", node_id);
-
-            let node_id = node_id.parse::<NodeId>().unwrap();
-            
-            let uuid = args.uuid.parse::<Uuid>().unwrap();
-
-            match node_type {
-                SimulationControllerType::WebBrowser => {
-                    let sender1 = &sc_remove_text_file
-                        .clients
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(WebCommand::RemoveTextFile(uuid)));
-                }
-
-                SimulationControllerType::WebServer => {
-                    let sender1 = &sc_remove_text_file
-                        .servers
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(WebCommand::RemoveTextFile(uuid)));
-                }
-
-                _ => {}
-            }
-        }
-    });
-
-    main_window.on_remove_media_file({
-        move |node_command: SimulationControllerCommand,
-            node_type: SimulationControllerType,
-            node_id: SharedString,
-            args: RemoveMediaFile| {
-
-            println!("remove_media_file {:?}", node_id);
-
-            let node_id = node_id.parse::<NodeId>().unwrap();
-            
-            let uuid = args.uuid.parse::<Uuid>().unwrap();
-
-            match node_type {
-                SimulationControllerType::WebBrowser => {
-                    let sender1 = &sc_remove_media_file
-                        .clients
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(WebCommand::RemoveMediaFile(uuid)));
-                }
-
-                SimulationControllerType::WebServer => {
-                    let sender1 = &sc_remove_media_file
-                        .servers
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(WebCommand::RemoveMediaFile(uuid)));
-                }
-
-                _ => {}
-            }
-        }
-    });
-
-    main_window.on_query_text_files_list({
-        move |node_command: SimulationControllerCommand,
-            node_type: SimulationControllerType,
-            node_id: SharedString| {
-
-            println!("query_text_files_list {:?}", node_id);
-
-            let node_id = node_id.parse::<NodeId>().unwrap();
-            
-            match node_type {
-                SimulationControllerType::WebBrowser => {
-                    let sender1 = &sc_query_text_files_list
-                        .clients
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(WebCommand::QueryTextFilesList));
-                }
-
-                SimulationControllerType::WebServer => {
-                    let sender1 = &sc_query_text_files_list
-                        .servers
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(WebCommand::QueryTextFilesList));
-                }
-
-                _ => {}
-            }
-        }
-    });
-
-    main_window.on_get_text_files_list({
-        move |node_command: SimulationControllerCommand,
-            node_type: SimulationControllerType,
-            node_id: SharedString| {
-
-            println!("get_text_files_list {:?}", node_id);
-
-            let node_id = node_id.parse::<NodeId>().unwrap();
-            
-            match node_type {
-                SimulationControllerType::WebBrowser => {
-                    let sender1 = &sc_get_text_files_list
-                        .clients
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(WebCommand::GetTextFilesList));
-                }
-
-                SimulationControllerType::WebServer => {
-                    let sender1 = &sc_get_text_files_list
-                        .servers
-                        .get(&node_id)
-                        .unwrap()
-                        .1;
-
-                    sender1.send(Box::new(WebCommand::GetTextFilesList));
-                }
-
-                _ => {}
-            }
-
-            //TODO salvare file
-        }
-    });
-
+            },
+        );
+    }
 
     // Initial log
     utils::log("Simulation Controller started", Color::from_rgb_u8(123, 132, 150));
