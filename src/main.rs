@@ -255,7 +255,7 @@ impl SimulationController {
                             notification_from, 
                             files_map 
                         } => {
-                            utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, FILE LISTS"));
+                            utils::log_default(&format!("NOTIFICATION FROM: {notification_from}, FILES LISTS (server_id, files_list): {:?}", files_map));
                         }
                     
                     }
