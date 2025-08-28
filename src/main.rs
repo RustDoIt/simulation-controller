@@ -423,7 +423,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut simulation_controller = SimulationController::default();
 
     simulation_controller.start_simulation(
-        "../network-initializer/config/star.toml",
+        "./config/star.toml",
         main_window.as_weak(),
     );
 

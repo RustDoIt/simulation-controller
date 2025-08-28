@@ -8,10 +8,8 @@ chrono = "0.4.41"
 slint = "1.12.1"
 once_cell = "1.19"
 crossbeam = "0.8.4"
-# common = { git = "https://github.com/RustDoIt/common.git" }
-common = { path = "../common" }
-# network-initializer = { git = "https://github.com/RustDoIt/network-initializer.git" }
-network-initializer = { path = "../network-initializer" }
+common = { git = "https://github.com/RustDoIt/common.git" }
+network-initializer = { git = "https://github.com/RustDoIt/network-initializer.git" }
 wg_internal = { git = "https://github.com/WGL-2024/WGL_repo_2024.git", features = ["debug"] }
 uuid = { version = "1.18.0", features = [ "serde", "v4"] }
 regex = "1.11.2"
